@@ -19,17 +19,13 @@ bool RingBuffer::Push(int64_t id, std::shared_ptr<std::vector<Measurement>> meas
     // discard old unlocked data
     if (buffer_.size() >= kMaxSize_) {
         auto it = buffer_.begin();
-        while (it < buffer_.end()) {
+        while (it < buffer_.end() && buffer_.size() >= kMaxSize_) {
             if (!it->locked_) {
                 if (on_delete_callback_) {
                     on_delete_callback_(buffer_.front().id_, false);
                 }
 
                 it = buffer_.erase(it);
-
-                if (buffer_.size() < kMaxSize_) {
-                    break;
-                }
             } else {
                 ++it;
             }
