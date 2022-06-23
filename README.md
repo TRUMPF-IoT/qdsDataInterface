@@ -16,11 +16,11 @@ Implemented core functionalities are:
 The goal is to have a core library which can be used in various projects, each with its own communication stack (e.g. gRPC, OPC-UA, REST) but same requirements for handling QDS data.
 
 ### Built With
-[CMake](https://cmake.org/)
-[GNU Compiler Collection](https://gcc.gnu.org/) (Linux)
-[Boost C++ Libraries](https://www.boost.org/)
-[GoogleTest](https://github.com/google/googletest) (for Unit Testing)
-[GIT](https://git-scm.com/) (optional, for Unit Testing)
+- [CMake](https://cmake.org/)
+- [GNU Compiler Collection](https://gcc.gnu.org/) (Linux)
+- [Boost C++ Libraries](https://www.boost.org/)
+- [GoogleTest](https://github.com/google/googletest) (for Unit Testing)
+- [GIT](https://git-scm.com/) (optional, for Unit Testing)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -41,11 +41,11 @@ At least Boost 1.75 is required.
 
 Download, build and install on Linux:
 ```
-wget -O boost_1_75_0.tar.gz https://sourceforge.net/projects/boost/files/boost/1.75.0/boost_1_75_0.tar.gz/download
-tar xzvf boost_1_75_0.tar.gz
-cd boost_1_75_0
-./bootstrap.sh --prefix=/usr
-./b2 cxxflags=-fPIC -a --with-json install
+$ wget -O boost_1_75_0.tar.gz https://sourceforge.net/projects/boost/files/boost/1.75.0/boost_1_75_0.tar.gz/download
+$ tar xzvf boost_1_75_0.tar.gz
+$ cd boost_1_75_0
+$ ./bootstrap.sh --prefix=/usr
+$ ./b2 cxxflags=-fPIC -a --with-json install
 ```
 
 ##### GoogleTest (for Unit Testing)
@@ -58,7 +58,7 @@ If you would like to disable testing you can pass the flag `-DTESTING=OFF` to th
 ### Build
 Building the project is fairly straight forward. First, run the `cmake` command to generate a Makefile for the project:
 ```
-cmake ..
+$ cmake ..
 ```
 ##### Config Options
 Here are some useful options you can add to the `cmake` command above:
@@ -68,12 +68,12 @@ Here are some useful options you can add to the `cmake` command above:
 
 For example if you want to build a shared library, install it under "/usr" and disable testing, you would call `cmake` like so:
 ```
-cmake .. -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX:PATH=/usr -DTESTING=OFF
+$ cmake .. -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX:PATH=/usr -DTESTING=OFF
 ```
 
 After `cmake` has succeeded, you can build the project using `make`:
 ```
-make all
+$ make all
 ```
 
 <p align="right">(<a href="#top">back to top</a>)</p>
@@ -81,7 +81,7 @@ make all
 ### Install
 Installation is easy:
 ```
-make install
+$ make install
 ```
 This will install the library (static or shared) and all public headers to the directory specified during build. Depending on the environment, the install command might need to run with `sudo`.
 
@@ -90,7 +90,7 @@ This will install the library (static or shared) and all public headers to the d
 ### Unit Tests
 If testing was not disabled during build, all tests can be run like this:
 ```
-make test
+$ make test
 Running tests...
 Test project /core/build
       Start  1: RingBufferTest.SimplePushRead
