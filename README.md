@@ -71,6 +71,7 @@ If you would like to disable testing you can pass the flag `-DTESTING=OFF` to th
 ### Build
 Run the `cmake` command to generate a Makefile for the project:
 ```
+$ mkdir build && cd build/
 $ cmake ..
 ```
 ##### Config Options
