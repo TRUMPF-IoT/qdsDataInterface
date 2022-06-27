@@ -33,12 +33,14 @@ include/i_data_source_out.hpp;\
 include/i_data_source_in_out.hpp;\
 include/measurement.hpp;\
 include/types.hpp;\
-include/exception.hpp\
+include/exception.hpp;\
+include/declspec.hpp\
 ")
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${Boost_LIBRARIES})
 
+target_compile_definitions(${PROJECT_NAME} PRIVATE DECLSPEC_EXPORT)
 target_compile_options(${PROJECT_NAME} PRIVATE
   $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
   $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
@@ -55,32 +57,35 @@ install(TARGETS ${PROJECT_NAME}
 option(TESTING "TESTING" ON)
 
 if (TESTING)
-    find_package(GTest)
+    ### install GTest
+    include(FetchContent)
 
-    if (NOT GTest_FOUND)
-        include(FetchContent)
-
-        FetchContent_Declare(
-          googletest
-          GIT_REPOSITORY https://github.com/google/googletest.git
-          GIT_TAG        release-1.11.0
-        )
-        
-        set(INSTALL_GTEST OFF)
-        
-        FetchContent_MakeAvailable(googletest)
-    endif()
-
-    include(GoogleTest)
-
+    FetchContent_Declare(
+      GoogleTest
+      GIT_REPOSITORY https://github.com/google/googletest.git
+      GIT_TAG        release-1.11.0
+    )
+    
+    set(INSTALL_GTEST OFF)
+    
     # For Windows: Prevent overriding the parent project's compiler/linker settings
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(GoogleTest)
+    
+    include(GoogleTest)
 
+    ### build tests
     add_executable(${PROJECT_NAME}-tests
       src/ring_buffer.test.cpp
       src/data_source_internal.test.cpp
       src/parsing/data_validator.test.cpp
     )
+	
+if (WIN32)
+    target_sources(${PROJECT_NAME}-tests PRIVATE $<TARGET_OBJECTS:${PROJECT_NAME}>)
+    add_custom_command(TARGET ${PROJECT_NAME}-tests POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>" $<TARGET_FILE_DIR:${PROJECT_NAME}-tests>)
+endif()
 
     target_include_directories(${PROJECT_NAME}-tests PRIVATE include)
     target_link_libraries(${PROJECT_NAME}-tests PRIVATE GTest::gtest_main ${PROJECT_NAME} ${Boost_LIBRARIES})

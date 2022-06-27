@@ -124,7 +124,12 @@ void DataSourceInternal::ProcessRefMapping(int64_t id, std::vector<Measurement>&
 
             auto it = view.find(value);
             if (it == view.end()) {
+#ifdef _MSC_VER
+                FILE *file;
+                if (fopen_s(&file, value.c_str(), "r") == 0) {
+#else
                 if (FILE *file = fopen(value.c_str(), "r")) {
+#endif
                     fclose(file);
                 } else {
                     throw RefException("The reference of '" + d.name_ + "' is neither an existing file, nor an existing reference",

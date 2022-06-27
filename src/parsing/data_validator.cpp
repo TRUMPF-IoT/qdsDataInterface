@@ -57,7 +57,7 @@ void DataValidator::OnObjectEnd(ParsingState& state) {
     try {
         switch (data.type_) {
             case MeasurementType::kString: {
-                std::get<std::string>(data.value_);
+                (void)std::get<std::string>(data.value_);
                 break;
             }
             case MeasurementType::kInteger: {
@@ -68,7 +68,7 @@ void DataValidator::OnObjectEnd(ParsingState& state) {
                 break;
             }
             case MeasurementType::kLong: {
-                std::get<std::int64_t>(data.value_);
+                (void)std::get<std::int64_t>(data.value_);
                 break;
             }
             case MeasurementType::kFloat: {
@@ -79,11 +79,11 @@ void DataValidator::OnObjectEnd(ParsingState& state) {
                 break;
             }
             case MeasurementType::kDouble: {
-                std::get<double>(data.value_);
+                (void)std::get<double>(data.value_);
                 break;
             }
             case MeasurementType::kBool: {
-                std::get<bool>(data.value_);
+                (void)std::get<bool>(data.value_);
                 break;
             }
             case MeasurementType::kWord: {
@@ -114,18 +114,18 @@ void DataValidator::OnObjectEnd(ParsingState& state) {
                 break;
             }
             case MeasurementType::kRef: {
-                std::get<std::string>(data.value_);
+                (void)std::get<std::string>(data.value_);
                 break;
             }
             case MeasurementType::kForeignKey: {
-                std::get<std::string>(data.value_);
+                (void)std::get<std::string>(data.value_);
                 break;
             }
             default: {
                 throw ParsingException("Measurement has bad TYPE", "DataValidator::OnObjectEnd");
             }
         }
-    } catch (const std::bad_variant_access& e) {
+    } catch (const std::bad_variant_access&) {
         throw ParsingException("VALUE of '" + data.name_ + "' does not match its TYPE", "DataValidator::OnObjectEnd");
     }
 

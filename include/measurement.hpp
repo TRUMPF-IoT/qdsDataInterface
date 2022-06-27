@@ -81,8 +81,9 @@ struct Measurement {
         auto it = types_map.find(type);
         if (it == types_map.end()) {
             type_ = MeasurementType::kNotSet;
+        } else {
+            type_ = it->second;
         }
-        type_ = it->second;
     }
 
     /*
