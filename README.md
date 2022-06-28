@@ -64,7 +64,7 @@ $ .\b2 -a --with-json --prefix=<boost_install_dir> install
 ##### GoogleTest (for Unit Testing)
 CMake will automatically download and install GoogleTest in the local build folder. For this to work, `git` must be installed on the system.
 
-If you would like to disable testing you can pass the flag `-DTESTING=OFF` to the CMake command.
+If you would like to disable testing you can pass the flag `-DTESTING=OFF` to the CMake command. If GoogleTest is already installed and available on the system via `find_package(GTest)`, pass the flag `-DUSE_SYSTEM_GTEST=ON` to the CMake command
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -80,6 +80,7 @@ Here are some useful options you can add to the `cmake` command above:
 - `CMAKE_INSTALL_PREFIX`: Install directory
 - `BUILD_SHARED_LIBS`: Build project as static or shared library (values: ON/OFF, default is OFF)
 - `TESTING`: Enable or disable unit tests (values: ON/OFF, default is ON)
+- `USE_SYSTEM_GTEST`: Enable or disable automatic installation of GTest; Enable if GTest is already installed (values: ON/OFF, default is OFF)
 
 For example if you installed boost to a non-default location and want to build a shared library, install it under "/usr" and disable testing, you would call `cmake` like this:
 ```
