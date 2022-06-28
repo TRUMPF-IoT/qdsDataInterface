@@ -6,7 +6,7 @@
 
 #include <memory>
 
-#include "declspec.hpp"
+#include "dll_export.h"
 #include "i_data_source_in_out.hpp"
 
 namespace qds_buffer::core {
@@ -14,7 +14,7 @@ namespace qds_buffer::core {
 /*
  * Offers factory methods for creation of a DataSource
  */
-class DECLSPEC DataSourceFactory {
+class DLL_EXPORT DataSourceFactory {
  public:
     /*
      * Creates a shared pointer to a DataSource object.

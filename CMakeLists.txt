@@ -24,6 +24,9 @@ add_library(${PROJECT_NAME}
   src/parsing/data_validator.cpp
 )
 
+include (GenerateExportHeader)
+generate_export_header(${PROJECT_NAME} BASE_NAME DLL)
+
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 1)
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "\
@@ -34,13 +37,12 @@ include/i_data_source_in_out.hpp;\
 include/measurement.hpp;\
 include/types.hpp;\
 include/exception.hpp;\
-include/declspec.hpp\
+${PROJECT_BINARY_DIR}/dll_export.h\
 ")
 
-target_include_directories(${PROJECT_NAME} PUBLIC include)
+target_include_directories(${PROJECT_NAME} PUBLIC include ${PROJECT_BINARY_DIR})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${Boost_LIBRARIES})
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE DECLSPEC_EXPORT)
 target_compile_options(${PROJECT_NAME} PRIVATE
   $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
   $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
@@ -86,10 +88,13 @@ if (TESTING)
       src/parsing/data_validator.test.cpp
     )
 	
-if (WIN32)
+if(WIN32 AND BUILD_SHARED_LIBS)
     target_sources(${PROJECT_NAME}-tests PRIVATE $<TARGET_OBJECTS:${PROJECT_NAME}>)
-    add_custom_command(TARGET ${PROJECT_NAME}-tests POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>" $<TARGET_FILE_DIR:${PROJECT_NAME}-tests>)
+    if(NOT USE_SYSTEM_GTEST)
+        # copy gtest DLLs
+        add_custom_command(TARGET ${PROJECT_NAME}-tests POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>" $<TARGET_FILE_DIR:${PROJECT_NAME}-tests>)
+    endif()
 endif()
 
     target_include_directories(${PROJECT_NAME}-tests PRIVATE include)
