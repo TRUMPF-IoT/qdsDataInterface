@@ -49,7 +49,7 @@ $ wget -O boost_1_75_0.tar.gz https://sourceforge.net/projects/boost/files/boost
 $ tar xzvf boost_1_75_0.tar.gz
 $ cd boost_1_75_0
 $ ./bootstrap.sh
-$ ./b2 cxxflags=-fPIC -a --with-json --prefix=<install_dir> install
+$ ./b2 cxxflags=-fPIC -a --with-json --prefix=<boost_install_dir> install
 ```
 
 Download, build and install on Windows:
