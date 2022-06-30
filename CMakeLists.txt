@@ -24,8 +24,10 @@ add_library(${PROJECT_NAME}
   src/parsing/data_validator.cpp
 )
 
-include (GenerateExportHeader)
-generate_export_header(${PROJECT_NAME} BASE_NAME DLL)
+# Generate export header to define "__declspec(dllexport)".
+# If built as static lib, the generated header contains empty defines.
+include(GenerateExportHeader)
+generate_export_header(${PROJECT_NAME} BASE_NAME qds_core)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 1)
@@ -37,7 +39,7 @@ include/i_data_source_in_out.hpp;\
 include/measurement.hpp;\
 include/types.hpp;\
 include/exception.hpp;\
-${PROJECT_BINARY_DIR}/dll_export.h\
+${PROJECT_BINARY_DIR}/qds_core_export.h\
 ")
 
 target_include_directories(${PROJECT_NAME} PUBLIC include ${PROJECT_BINARY_DIR})
