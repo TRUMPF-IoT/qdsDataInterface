@@ -185,4 +185,61 @@ TEST(DataSourceInternalTest, DeleteRefMapping) {
     EXPECT_NO_THROW(ds.GetReference("ref-333"));
     EXPECT_THROW(ds.GetReference("ref-444"), RefException); // Reference ref-444 not found
     EXPECT_NO_THROW(ds.GetReference("ref-555"));
+
+    ds.Reset();
+
+    // delete with files
+    std::ofstream file;
+    file.open("DeleteRefMapping1.data"); file.close();
+    file.open("DeleteRefMapping2.data"); file.close();
+    ds.Add(1, "{\"NAME\":\"file1\",\"TYPE\":\"REF\",\"VALUE\":\"DeleteRefMapping1.data\"}");
+    ds.Add(2, "{\"NAME\":\"file2\",\"TYPE\":\"REF\",\"VALUE\":\"DeleteRefMapping2.data\"}");
+    ds.Add(3, "{\"NAME\":\"file1\",\"TYPE\":\"REF\",\"VALUE\":\"DeleteRefMapping1.data\"}");
+
+    EXPECT_FALSE((std::ifstream("DeleteRefMapping1.data")).fail());
+    EXPECT_FALSE((std::ifstream("DeleteRefMapping2.data")).fail());
+
+    auto it = ds.begin();
+    EXPECT_EQ("\"ref-0\"", it->measurements_->data()->ValueToString());
+    ++it;
+    EXPECT_EQ("\"ref-1\"", it->measurements_->data()->ValueToString());
+    ++it;
+    EXPECT_EQ("\"ref-2\"", it->measurements_->data()->ValueToString());
+
+    ds.Delete(1);
+
+    EXPECT_FALSE((std::ifstream("DeleteRefMapping1.data")).fail());
+    EXPECT_FALSE((std::ifstream("DeleteRefMapping2.data")).fail());
+
+    ds.Delete(2);
+
+    EXPECT_FALSE((std::ifstream("DeleteRefMapping1.data")).fail());
+    EXPECT_TRUE((std::ifstream("DeleteRefMapping2.data")).fail());
+
+    ds.Delete(3);
+
+    EXPECT_TRUE((std::ifstream("DeleteRefMapping1.data")).fail());
+    EXPECT_TRUE((std::ifstream("DeleteRefMapping2.data")).fail());
+
+    // reset with files
+    file.open("DeleteRefMapping1.data"); file.close();
+    file.open("DeleteRefMapping2.data"); file.close();
+    ds.Add(1, "{\"NAME\":\"file1\",\"TYPE\":\"REF\",\"VALUE\":\"DeleteRefMapping1.data\"}");
+    ds.Add(2, "{\"NAME\":\"file2\",\"TYPE\":\"REF\",\"VALUE\":\"DeleteRefMapping2.data\"}");
+    ds.Add(3, "{\"NAME\":\"file1\",\"TYPE\":\"REF\",\"VALUE\":\"DeleteRefMapping1.data\"}");
+
+    it = ds.begin();
+    EXPECT_EQ("\"ref-3\"", it->measurements_->data()->ValueToString());
+    ++it;
+    EXPECT_EQ("\"ref-4\"", it->measurements_->data()->ValueToString());
+    ++it;
+    EXPECT_EQ("\"ref-5\"", it->measurements_->data()->ValueToString());
+
+    EXPECT_FALSE((std::ifstream("DeleteRefMapping1.data")).fail());
+    EXPECT_FALSE((std::ifstream("DeleteRefMapping2.data")).fail());
+
+    ds.Reset();
+
+    EXPECT_TRUE((std::ifstream("DeleteRefMapping1.data")).fail());
+    EXPECT_TRUE((std::ifstream("DeleteRefMapping2.data")).fail());
 }

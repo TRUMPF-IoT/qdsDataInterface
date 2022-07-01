@@ -4,6 +4,8 @@
 
 #include "data_source_internal.hpp"
 
+#include <unordered_set>
+
 #include <exception.hpp>
 
 #include "parsing/data_validator.hpp"
@@ -166,10 +168,28 @@ void DataSourceInternal::DeleteRefMapping(int64_t id, bool clear) {
     std::unique_lock lock(ref_mapping_mutex_);
 
     if (clear) {
+        std::unordered_set<std::string_view> paths;
+        for(const ReferenceData& data : ref_mapping_.get<multi_index_tag::path>()) {
+            if (data.is_path_) {
+                paths.emplace(data.content_);
+            }
+        }
+        for (auto path : paths) {
+            std::remove(std::string(path).c_str());
+        }
+
         ref_mapping_.clear();
     } else {
-        auto&& view = ref_mapping_.get<multi_index_tag::id>();
-        for (auto it = view.find(id); it != view.end(); it = view.find(id)) {
+        auto&& id_view = ref_mapping_.get<multi_index_tag::id>();
+        auto&& path_view = ref_mapping_.get<multi_index_tag::path>();
+
+        for (auto it = id_view.find(id); it != id_view.end(); it = id_view.find(id)) {
+            if (it->is_path_) {
+                // only delete if no other reference to this file exists
+                if (path_view.count(it->content_) == 1) {
+                    std::remove(it->content_.c_str());
+                }
+            }
             ref_mapping_.erase(it);
         }
     }

@@ -18,7 +18,19 @@ namespace qds_buffer::core {
 namespace multi_index_tag {
     struct id{};
     struct ref{};
+    struct path{};
 }
+
+struct ContentHasher {
+    std::size_t operator()(const std::string& content) const {
+        // Only file paths need to be considered for indexing.
+        // To optimize for speed, only hash on content that could be a path (<= FILENAME_MAX)
+        if (content.length() > FILENAME_MAX) {
+            return 0;
+        }
+        return std::hash<std::string>{}(content);
+    }
+};
 
 using ReferenceContainer = boost::multi_index_container<
   ReferenceData,
@@ -30,6 +42,11 @@ using ReferenceContainer = boost::multi_index_container<
       boost::multi_index::hashed_unique<
           boost::multi_index::tag<multi_index_tag::ref>,
           boost::multi_index::member<ReferenceData, std::string, &ReferenceData::ref_>
+      >,
+      boost::multi_index::hashed_non_unique<
+          boost::multi_index::tag<multi_index_tag::path>,
+          boost::multi_index::member<ReferenceData, std::string, &ReferenceData::content_>,
+          ContentHasher
       >
   >
 >;
