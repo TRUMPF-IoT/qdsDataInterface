@@ -76,4 +76,12 @@ class RefException : public Exception {
     RefException(const std::string& msg, const std::string& scope) : Exception(msg, scope) {}
 };
 
+/*
+ * Thrown if a file operation results in an error.
+ */
+class FileIoException : public Exception {
+ public:
+    FileIoException(const std::string& msg, const std::string& scope) : Exception(msg, scope) {}
+};
+
 } // namespace

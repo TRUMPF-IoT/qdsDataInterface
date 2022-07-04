@@ -17,10 +17,8 @@ namespace qds_buffer::core {
 struct ReferenceData {
     int64_t id_;            // data ID, to which the reference belongs (0, if not yet determined)
     std::string ref_;       // REF value
-
-    bool is_path_;          // is this reference a path to a file?
     std::string format_;    // data format (e.g. bmp, jpg, xml)
-    std::string content_;   // content, either a file path or the binary data itself
+    std::string content_;   // binary data
 };
 
 /*

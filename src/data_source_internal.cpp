@@ -4,6 +4,7 @@
 
 #include "data_source_internal.hpp"
 
+#include <fstream>
 #include <unordered_set>
 
 #include <exception.hpp>
@@ -51,7 +52,7 @@ void DataSourceInternal::SetReference(const std::string& ref, const std::string&
     }
 
     // id = 0, it will get updated once the measurement arrives
-    ref_mapping_.emplace(ReferenceData{0, ref, false, data_format, data}); // @suppress("Symbol is not resolved")
+    ref_mapping_.emplace(ReferenceData{0, ref, data_format, data}); // @suppress("Symbol is not resolved")
 }
 
 /**
@@ -156,7 +157,33 @@ void DataSourceInternal::ProcessRefMapping(int64_t id, std::vector<Measurement>&
                 format = value.substr(file_extension_position + 1);
             }
 
-            ref_mapping_.emplace(ReferenceData{id, ref, true, format, value}); // @suppress("Symbol is not resolved")
+            // load file content
+            const std::string& path = value;
+            std::ifstream ifs(path, std::ios::binary|std::ios::ate);
+            if (!ifs) {
+                throw FileIoException("Could not open file " + path, "DataSourceInternal::ProcessRefMapping");
+            }
+
+            auto end = ifs.tellg();
+            ifs.seekg(0, std::ios::beg);
+
+            auto size = std::size_t(end - ifs.tellg());
+            if(size == 0) {
+                throw FileIoException("File size is 0 bytes", "DataSourceInternal::ProcessRefMapping");
+            }
+
+            std::string buffer;
+            buffer.resize(size);
+            if(!ifs.read((char*)buffer.data(), size)) {
+                throw FileIoException("Could not read from file " + path, "DataSourceInternal::ProcessRefMapping");
+            }
+
+            // delete file
+            if (std::remove(path.c_str()) != 0) {
+                throw FileIoException("Could not delete file " + path, "DataSourceInternal::ProcessRefMapping");
+            }
+
+            ref_mapping_.emplace(ReferenceData{id, ref, format, buffer}); // @suppress("Symbol is not resolved")
 
             // replace original ref value
             d.value_ = ref;
@@ -168,28 +195,10 @@ void DataSourceInternal::DeleteRefMapping(int64_t id, bool clear) {
     std::unique_lock lock(ref_mapping_mutex_);
 
     if (clear) {
-        std::unordered_set<std::string_view> paths;
-        for(const ReferenceData& data : ref_mapping_.get<multi_index_tag::path>()) {
-            if (data.is_path_) {
-                paths.emplace(data.content_);
-            }
-        }
-        for (auto path : paths) {
-            std::remove(std::string(path).c_str());
-        }
-
         ref_mapping_.clear();
     } else {
         auto&& id_view = ref_mapping_.get<multi_index_tag::id>();
-        auto&& path_view = ref_mapping_.get<multi_index_tag::path>();
-
         for (auto it = id_view.find(id); it != id_view.end(); it = id_view.find(id)) {
-            if (it->is_path_) {
-                // only delete if no other reference to this file exists
-                if (path_view.count(it->content_) == 1) {
-                    std::remove(it->content_.c_str());
-                }
-            }
             ref_mapping_.erase(it);
         }
     }
