@@ -178,6 +178,8 @@ void DataSourceInternal::ProcessRefMapping(int64_t id, std::vector<Measurement>&
                 throw FileIoException("Could not read from file " + path, "DataSourceInternal::ProcessRefMapping");
             }
 
+            ifs.close();
+
             // delete file
             if (std::remove(path.c_str()) != 0) {
                 throw FileIoException("Could not delete file " + path, "DataSourceInternal::ProcessRefMapping");
