@@ -5,6 +5,8 @@
 cmake_minimum_required(VERSION 3.14)
 project(trumpf-qds-buffer-core VERSION 0.1)
 
+option(SKIP_INSTALL "SKIP_INSTALL" OFF)
+
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
 # Set CXX to 17
@@ -50,10 +52,12 @@ target_compile_options(${PROJECT_NAME} PRIVATE
   $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
 )
 
-install(TARGETS ${PROJECT_NAME}
-    LIBRARY DESTINATION lib
-    PUBLIC_HEADER DESTINATION include
-)
+if (NOT SKIP_INSTALL)
+    install(TARGETS ${PROJECT_NAME}
+        LIBRARY DESTINATION lib
+        PUBLIC_HEADER DESTINATION include
+    )
+endif()
 
 ################################
 # Unit Tests
