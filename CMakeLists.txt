@@ -5,7 +5,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(trumpf-qds-buffer-core VERSION 0.1)
 
-option(SKIP_INSTALL "SKIP_INSTALL" OFF)
+option(INSTALL_PUBLIC_HEADER "INSTALL_PUBLIC_HEADER" ON)
 
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
@@ -33,16 +33,19 @@ generate_export_header(${PROJECT_NAME} BASE_NAME qds_core)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 1)
-set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "\
-include/data_source_factory.hpp;\
-include/i_data_source_in.hpp;\
-include/i_data_source_out.hpp;\
-include/i_data_source_in_out.hpp;\
-include/measurement.hpp;\
-include/types.hpp;\
-include/exception.hpp;\
-${PROJECT_BINARY_DIR}/qds_core_export.h\
-")
+
+if (INSTALL_PUBLIC_HEADER)
+    set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "\
+    include/data_source_factory.hpp;\
+    include/i_data_source_in.hpp;\
+    include/i_data_source_out.hpp;\
+    include/i_data_source_in_out.hpp;\
+    include/measurement.hpp;\
+    include/types.hpp;\
+    include/exception.hpp;\
+    ${PROJECT_BINARY_DIR}/qds_core_export.h\
+    ")
+endif()
 
 target_include_directories(${PROJECT_NAME} PUBLIC include ${PROJECT_BINARY_DIR})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${Boost_LIBRARIES})
@@ -52,12 +55,10 @@ target_compile_options(${PROJECT_NAME} PRIVATE
   $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
 )
 
-if (NOT SKIP_INSTALL)
-    install(TARGETS ${PROJECT_NAME}
-        LIBRARY DESTINATION lib
-        PUBLIC_HEADER DESTINATION include
-    )
-endif()
+install(TARGETS ${PROJECT_NAME}
+    LIBRARY DESTINATION lib
+    PUBLIC_HEADER DESTINATION include
+)
 
 ################################
 # Unit Tests
