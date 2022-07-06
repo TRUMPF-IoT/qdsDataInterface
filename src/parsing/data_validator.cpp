@@ -237,6 +237,11 @@ ValidationStructure DataValidator::BuildParseValidation() {
                 }
                 default: {}
             }
+        }},
+        ////////////////////////// DECIMALS /////////////////////////////////
+        {"DECIMALS", [](ParserEvent, Measurement&, const char*, size_t, const void*) {
+            // legacy key set by VisionLine, ignore
+            return true;
         }}
     };
 }
