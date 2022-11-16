@@ -108,7 +108,8 @@ void DataValidator::OnObjectEnd(ParsingState& state) {
                 }
 
                 // follow API recommendation of moving timestamp entry to the front of the list;
-                // note that 'data' will not be pointing to the correct entry anymore after this operation
+                // note that 'data' will not be pointing to the correct entry anymore after this operation,
+                // however, 'data' will not be accessed anymore, so it's not critical to update
                 std::rotate(state.data_->begin(), state.data_->end()-1, state.data_->end());
 
                 break;
