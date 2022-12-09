@@ -61,7 +61,7 @@ bool RingBuffer::Push(int64_t id, std::shared_ptr<std::vector<Measurement>> meas
         }
     }
 
-    buffer_.push_back(BufferEntry{id, measurement, false});
+    buffer_.push_back(BufferEntry{id, measurement, GetCurrentTimeMs(), false});
     return true;
 }
 
@@ -85,14 +85,23 @@ void RingBuffer::Delete(int64_t id) {
     // not found, but treat as success
 }
 
-void RingBuffer::Reset() {
+ResetInformation RingBuffer::Reset() {
     std::unique_lock lock(mutex_);
+
+    if (buffer_.empty()) return {0, 0, 0, 0};
 
     if (on_delete_callback_) {
         on_delete_callback_(0, true);
     }
 
+    uint64_t reset_time_ms = GetCurrentTimeMs();
+    uint64_t oldest_dataset_time_ms = buffer_.front().timestamp_ms_;
+    uint64_t newest_dataset_time_ms = buffer_.back().timestamp_ms_;
+    uint32_t deleted_datasets_count = buffer_.size();
+
     buffer_.clear();
+
+    return {reset_time_ms, oldest_dataset_time_ms, newest_dataset_time_ms, deleted_datasets_count};
 }
 
 std::shared_mutex& RingBuffer::GetSharedMutex() const {
@@ -127,6 +136,11 @@ int64_t RingBuffer::GetLastId() const {
 
 int8_t RingBuffer::GetCounterMode() const {
     return kCounterMode_;
+}
+
+uint64_t RingBuffer::GetCurrentTimeMs() {
+    using namespace std::chrono;
+    return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
 }
 
 } // namespace

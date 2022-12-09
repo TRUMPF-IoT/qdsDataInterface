@@ -23,7 +23,7 @@ class RingBuffer {
 
     bool Push(int64_t id, std::shared_ptr<std::vector<Measurement>> measurement);
     void Delete(int64_t id);
-    void Reset();
+    ResetInformation Reset();
 
     std::shared_mutex& GetSharedMutex() const;
     BufferQueueType::iterator begin();
@@ -35,6 +35,8 @@ class RingBuffer {
     int8_t GetCounterMode() const;
 
  private:
+    static uint64_t GetCurrentTimeMs();
+
     const size_t kMaxSize_;
     const int8_t kCounterMode_;
 

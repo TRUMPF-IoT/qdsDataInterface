@@ -42,6 +42,17 @@ class IDataSourceOut {
      */
     virtual void Reset() = 0;
 
+    /**
+     * Check if a reset has happened after the last call to AcknowledgeReset()
+     */
+    virtual bool IsReset() const = 0;
+
+    /**
+     * Acknowleges a previous reset; this will effectively clear any existing reset information
+     * @returns the reset information collected from calls to Reset() after the last call to AcknowledgeReset()
+     */
+    virtual ResetInformationList AcknowledgeReset() = 0;
+
     /*
      * @returns buffer mutex; use in combination with begin() and end() when iterating through the buffer
      */

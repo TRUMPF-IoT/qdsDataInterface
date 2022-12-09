@@ -15,10 +15,14 @@ namespace qds_buffer::core {
 
 using namespace std::placeholders;
 
-DataSourceInternal::DataSourceInternal(size_t buffer_size, int8_t counter_mode)
+DataSourceInternal::DataSourceInternal(size_t buffer_size, int8_t counter_mode, size_t reset_information_size)
     : parser_(std::bind(&parsing::DataValidator::ParserCallback, _1, _2, _3, _4, _5)), // @suppress("Symbol is not resolved")
       buffer_(buffer_size, counter_mode, std::bind(&DataSourceInternal::DeleteRefMapping, this, _1, _2)), // @suppress("Symbol is not resolved")
-      ref_counter_(0) {}
+      ref_counter_(0),
+      kResetInformationSize_(reset_information_size) {
+
+    reset_information_list_.exceeded_max_entries_ = false;
+}
 
 /**
  * IDataSourceIn methods
@@ -64,7 +68,39 @@ void DataSourceInternal::Delete(int64_t id) {
 }
 
 void DataSourceInternal::Reset() {
-    buffer_.Reset();
+    std::unique_lock lock(reset_information_list_mutex_);
+    auto& list = reset_information_list_.list_;
+
+    const auto& reset_information = list.emplace_back(buffer_.Reset());
+
+    if (reset_information.reset_time_ms_ == 0) {
+        // this is an empty structure, remove it from the list
+        list.pop_back();
+    }
+
+    if (list.size() > kResetInformationSize_) {
+        // list has overflown, delete oldest information
+        list.pop_front();
+        reset_information_list_.exceeded_max_entries_ = true;
+    }
+}
+
+bool DataSourceInternal::IsReset() const {
+    std::shared_lock lock(reset_information_list_mutex_);
+
+    return !reset_information_list_.list_.empty();
+}
+
+ResetInformationList DataSourceInternal::AcknowledgeReset() {
+    std::unique_lock lock(reset_information_list_mutex_);
+
+    // create a copy to return
+    ResetInformationList list = reset_information_list_;
+
+    // clear member
+    reset_information_list_ = {{}, false};
+
+    return list;
 }
 
 std::shared_mutex& DataSourceInternal::GetBufferSharedMutex() const {

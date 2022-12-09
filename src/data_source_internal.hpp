@@ -39,7 +39,7 @@ using ReferenceContainer = boost::multi_index_container<
  */
 class DataSourceInternal: public IDataSourceInOut {
  public:
-    DataSourceInternal(size_t buffer_size = 100, int8_t counter_mode = 0);
+    DataSourceInternal(size_t buffer_size = 100, int8_t counter_mode = 0, size_t reset_information_size = 100);
 
     // IDataSourceIn methods
     virtual bool Add(int64_t id, std::string_view json) override;
@@ -49,6 +49,8 @@ class DataSourceInternal: public IDataSourceInOut {
     // IDataSourceOut methods
     virtual void Delete(int64_t id) override;
     virtual void Reset() override;
+    virtual bool IsReset() const override;
+    virtual ResetInformationList AcknowledgeReset() override;
 
     virtual std::shared_mutex& GetBufferSharedMutex() const override;
     virtual BufferQueueType::iterator begin() override;
@@ -73,6 +75,10 @@ class DataSourceInternal: public IDataSourceInOut {
     mutable std::shared_mutex ref_mapping_mutex_;
     ReferenceContainer ref_mapping_;
     uint64_t ref_counter_;
+
+    const size_t kResetInformationSize_;
+    ResetInformationList reset_information_list_;
+    mutable std::shared_mutex reset_information_list_mutex_;
 };
 
 } // namespace
