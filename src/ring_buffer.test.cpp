@@ -147,7 +147,7 @@ TEST(RingBufferTest, Reset) {
 
     buffer.Push(1, DUMMY); buffer.Push(10, DUMMY); buffer.Push(50, DUMMY); buffer.Push(100, DUMMY); buffer.Push(500, DUMMY);
     EXPECT_EQ(5, buffer.GetSize());
-    buffer.Reset();
+    buffer.Reset(ResetReason::UNKNOWN);
     EXPECT_EQ(0, buffer.GetSize());
 }
 
@@ -183,7 +183,7 @@ TEST(RingBufferTest, OnDeleteCallback) {
     EXPECT_EQ(4, id_);
     EXPECT_EQ(false, clear_);
 
-    buffer.Reset();
+    buffer.Reset(ResetReason::UNKNOWN);
     EXPECT_EQ(true, clear_);
 }
 

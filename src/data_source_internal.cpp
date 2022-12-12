@@ -67,11 +67,11 @@ void DataSourceInternal::Delete(int64_t id) {
     buffer_.Delete(id);
 }
 
-void DataSourceInternal::Reset() {
+void DataSourceInternal::Reset(ResetReason reason) {
     std::unique_lock lock(reset_information_list_mutex_);
     auto& list = reset_information_list_.list_;
 
-    const auto& reset_information = list.emplace_back(buffer_.Reset());
+    const auto& reset_information = list.emplace_back(buffer_.Reset(reason));
 
     if (reset_information.reset_time_ms_ == 0) {
         // this is an empty structure, remove it from the list

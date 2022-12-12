@@ -23,7 +23,7 @@ class RingBuffer {
 
     bool Push(int64_t id, std::shared_ptr<std::vector<Measurement>> measurement);
     void Delete(int64_t id);
-    ResetInformation Reset();
+    ResetInformation Reset(ResetReason reason);
 
     std::shared_mutex& GetSharedMutex() const;
     BufferQueueType::iterator begin();

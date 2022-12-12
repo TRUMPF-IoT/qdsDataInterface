@@ -48,7 +48,7 @@ class DataSourceInternal: public IDataSourceInOut {
 
     // IDataSourceOut methods
     virtual void Delete(int64_t id) override;
-    virtual void Reset() override;
+    virtual void Reset(ResetReason reason) override;
     virtual bool IsReset() const override;
     virtual ResetInformationList AcknowledgeReset() override;
 

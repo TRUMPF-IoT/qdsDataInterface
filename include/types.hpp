@@ -30,21 +30,32 @@ struct BufferEntry {
 using BufferQueueType = std::deque<BufferEntry>;
 
 /**
+ * Reset Reason
+ */
+enum class ResetReason {
+    UNKNOWN,    // the reason for the reset is unknown
+                // (e.g. as default value on the server side if an older client calls the reset method)
+    SYSTEM,     // the reset is caused by the system/product (e.g. due to a restart)
+    USER        // the reset is caused by a user action (e.g. due to a manual buffer reset action)
+};
+
+/**
  * Stores information of a buffer reset
  */
 struct ResetInformation {
-    uint64_t reset_time_ms_;
-    uint64_t oldest_dataset_time_ms_;
-    uint64_t newest_dataset_time_ms_;
-    uint32_t deleted_datasets_count_;
+    uint64_t reset_time_ms_;            // ISO 8601 timestamp of the buffer reset
+    ResetReason reset_reason;           // reason for the reset
+    uint64_t oldest_dataset_time_ms_;   // ISO 8601 timestamp of the oldest deleted data set due to a buffer reset
+    uint64_t newest_dataset_time_ms_;   // ISO 8601 timestamp of the newest deleted data set due to a buffer reset
+    uint32_t deleted_datasets_count_;   // number of deleted data sets due to a buffer reset
 };
 
 /*
- * Stores a list of reset information and a flag of whether or not the list has overflown
+ * Wrapper struct
  */
 struct ResetInformationList {
-    std::deque<ResetInformation> list_;
-    bool exceeded_max_entries_;
+    std::deque<ResetInformation> list_; // list of reset information
+    bool exceeded_max_entries_;         // flag of whether or not the list has overflown
 };
 
 }

@@ -85,10 +85,10 @@ void RingBuffer::Delete(int64_t id) {
     // not found, but treat as success
 }
 
-ResetInformation RingBuffer::Reset() {
+ResetInformation RingBuffer::Reset(ResetReason reason) {
     std::unique_lock lock(mutex_);
 
-    if (buffer_.empty()) return {0, 0, 0, 0};
+    if (buffer_.empty()) return {0, ResetReason::UNKNOWN, 0, 0, 0};
 
     if (on_delete_callback_) {
         on_delete_callback_(0, true);
@@ -101,7 +101,7 @@ ResetInformation RingBuffer::Reset() {
 
     buffer_.clear();
 
-    return {reset_time_ms, oldest_dataset_time_ms, newest_dataset_time_ms, deleted_datasets_count};
+    return {reset_time_ms, reason, oldest_dataset_time_ms, newest_dataset_time_ms, deleted_datasets_count};
 }
 
 std::shared_mutex& RingBuffer::GetSharedMutex() const {

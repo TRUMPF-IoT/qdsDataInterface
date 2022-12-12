@@ -39,8 +39,10 @@ class IDataSourceOut {
 
     /*
      * Completely resets the buffer (deletes all data)
+     *
+     * @param reason: the reset reason
      */
-    virtual void Reset() = 0;
+    virtual void Reset(ResetReason reason) = 0;
 
     /**
      * Check if a reset has happened after the last call to AcknowledgeReset()

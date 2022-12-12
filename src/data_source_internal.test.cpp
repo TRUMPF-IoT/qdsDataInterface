@@ -55,7 +55,7 @@ TEST(DataSourceInternalTest, Reset) {
     ds.Add(111, DUMMY_JSON); ds.Add(222, DUMMY_JSON); ds.Add(333, DUMMY_JSON);
     EXPECT_EQ(3, ds.GetSize());
 
-    ds.Reset();
+    ds.Reset(ResetReason::UNKNOWN);
     EXPECT_EQ(0, ds.GetSize());
 }
 
@@ -98,7 +98,7 @@ TEST(DataSourceInternalTest, GetSize) {
     ds.Add(333, DUMMY_JSON);
     ds.Add(444, DUMMY_JSON);
     EXPECT_EQ(4, ds.GetSize());
-    ds.Reset();
+    ds.Reset(ResetReason::UNKNOWN);
     EXPECT_EQ(0, ds.GetSize());
 }
 
