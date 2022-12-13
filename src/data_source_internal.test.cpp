@@ -59,6 +59,46 @@ TEST(DataSourceInternalTest, Reset) {
     EXPECT_EQ(0, ds.GetSize());
 }
 
+TEST(DataSourceInternalTest, IsReset) {
+    DataSourceInternal ds;
+
+    EXPECT_FALSE(ds.IsReset());
+
+    ds.Add(111, DUMMY_JSON); ds.Add(222, DUMMY_JSON); ds.Add(333, DUMMY_JSON);
+
+    EXPECT_FALSE(ds.IsReset());
+
+    ds.Reset(ResetReason::UNKNOWN);
+
+    EXPECT_TRUE(ds.IsReset());
+}
+
+TEST(DataSourceInternalTest, AcknowledgeReset) {
+    DataSourceInternal ds;
+
+    ds.Add(0, DUMMY_JSON);
+
+    auto info = ds.AcknowledgeReset();
+    EXPECT_TRUE(info.list_.empty());
+    EXPECT_FALSE(info.exceeded_max_entries_);
+
+    ds.Reset(ResetReason::SYSTEM);
+
+    info = ds.AcknowledgeReset();
+    EXPECT_EQ(1, info.list_.size());
+    EXPECT_FALSE(info.exceeded_max_entries_);
+
+    for (int i = 1; i < 102; i++) {
+        ds.Add(i, DUMMY_JSON);
+        ds.Reset(ResetReason::SYSTEM);
+    }
+
+    info = ds.AcknowledgeReset();
+    EXPECT_EQ(100, info.list_.size());
+    EXPECT_TRUE(info.exceeded_max_entries_);
+    EXPECT_EQ(ResetReason::SYSTEM, info.list_[0].reset_reason);
+}
+
 TEST(DataSourceInternalTest, Iterator) {
     DataSourceInternal ds;
 
