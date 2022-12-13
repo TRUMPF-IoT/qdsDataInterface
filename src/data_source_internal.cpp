@@ -59,14 +59,6 @@ void DataSourceInternal::SetReference(const std::string& ref, const std::string&
     ref_mapping_.emplace(ReferenceData{0, ref, data_format, data}); // @suppress("Symbol is not resolved")
 }
 
-/**
- * IDataSourceOut methods
- */
-
-void DataSourceInternal::Delete(int64_t id) {
-    buffer_.Delete(id);
-}
-
 void DataSourceInternal::Reset(ResetReason reason) {
     std::unique_lock lock(reset_information_list_mutex_);
     auto& list = reset_information_list_.list_;
@@ -83,6 +75,14 @@ void DataSourceInternal::Reset(ResetReason reason) {
         list.pop_front();
         reset_information_list_.exceeded_max_entries_ = true;
     }
+}
+
+/**
+ * IDataSourceOut methods
+ */
+
+void DataSourceInternal::Delete(int64_t id) {
+    buffer_.Delete(id);
 }
 
 bool DataSourceInternal::IsReset() const {

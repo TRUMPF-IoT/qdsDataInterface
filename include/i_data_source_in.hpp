@@ -6,6 +6,8 @@
 
 #include <string_view>
 
+#include "types.hpp"
+
 namespace qds_buffer::core {
 
 /*
@@ -51,6 +53,12 @@ class IDataSourceIn {
      */
     virtual void SetReference(const std::string& ref, const std::string& data, const std::string& data_format) = 0;
 
+    /*
+     * Completely resets the buffer (deletes all data)
+     *
+     * @param reason: the reset reason
+     */
+    virtual void Reset(ResetReason reason) = 0;
 
     ////////////////////////////////// shared methods //////////////////////////////////
     /*

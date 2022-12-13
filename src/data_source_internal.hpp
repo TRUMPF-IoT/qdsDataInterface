@@ -44,11 +44,11 @@ class DataSourceInternal: public IDataSourceInOut {
     // IDataSourceIn methods
     virtual bool Add(int64_t id, std::string_view json) override;
     virtual void SetReference(const std::string& ref, const std::string& data, const std::string& data_format) override;
+    virtual void Reset(ResetReason reason) override;
     // /IDataSourceIn methods
 
     // IDataSourceOut methods
     virtual void Delete(int64_t id) override;
-    virtual void Reset(ResetReason reason) override;
     virtual bool IsReset() const override;
     virtual ResetInformationList AcknowledgeReset() override;
 
