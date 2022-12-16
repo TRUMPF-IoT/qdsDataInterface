@@ -38,7 +38,7 @@ class IDataSourceOut {
     virtual void Delete(int64_t id) = 0;
 
     /**
-     * Check if a reset has happened after the last call to AcknowledgeReset()
+     * Check if a reset has happened since the last call to AcknowledgeReset()
      */
     virtual bool IsReset() const = 0;
 
@@ -47,6 +47,17 @@ class IDataSourceOut {
      * @returns the reset information collected from calls to Reset() after the last call to AcknowledgeReset()
      */
     virtual ResetInformationList AcknowledgeReset() = 0;
+
+    /**
+     * Check if an overflow has happened since the last call to AcknowledgeOverflow()
+     */
+    virtual bool IsOverflown() const = 0;
+
+    /**
+     * Acknowleges a previous overflow; this will effectively clear any existing deletion information
+     * @returns the deletion information collected from discarding old datasets after the last call to AcknowledgeOverflow()
+     */
+    virtual DeletionInformationList AcknowledgeOverflow() = 0;
 
     /*
      * @returns buffer mutex; use in combination with begin() and end() when iterating through the buffer

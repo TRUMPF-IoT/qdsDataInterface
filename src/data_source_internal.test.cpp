@@ -99,6 +99,50 @@ TEST(DataSourceInternalTest, AcknowledgeReset) {
     EXPECT_EQ(ResetReason::SYSTEM, info.list_[0].reset_reason);
 }
 
+TEST(DataSourceInternalTest, IsOverflown) {
+    DataSourceInternal ds(2);
+
+    EXPECT_FALSE(ds.IsOverflown());
+
+    ds.Add(111, DUMMY_JSON); ds.Add(222, DUMMY_JSON);
+    EXPECT_FALSE(ds.IsOverflown());
+
+    ds.Add(333, DUMMY_JSON);
+    EXPECT_TRUE(ds.IsOverflown());
+}
+
+TEST(DataSourceInternalTest, AcknowledgeOverflow) {
+    DataSourceInternal ds;
+
+    ds.Add(0, DUMMY_JSON);
+
+    auto info = ds.AcknowledgeOverflow();
+    EXPECT_TRUE(info.list_.empty());
+    EXPECT_FALSE(info.exceeded_max_entries_);
+
+    for (int i = 1; i < 100; i++) {
+        ds.Add(i, DUMMY_JSON);
+    }
+
+    info = ds.AcknowledgeOverflow();
+    EXPECT_TRUE(info.list_.empty());
+    EXPECT_FALSE(info.exceeded_max_entries_);
+
+    ds.Add(101, DUMMY_JSON);
+
+    info = ds.AcknowledgeOverflow();
+    EXPECT_EQ(1, info.list_.size());
+    EXPECT_FALSE(info.exceeded_max_entries_);
+
+    for (int i = 102; i < 203; i++) {
+        ds.Add(i, DUMMY_JSON);
+    }
+
+    info = ds.AcknowledgeOverflow();
+    EXPECT_EQ(100, info.list_.size());
+    EXPECT_TRUE(info.exceeded_max_entries_);
+}
+
 TEST(DataSourceInternalTest, Iterator) {
     DataSourceInternal ds;
 

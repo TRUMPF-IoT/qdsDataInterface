@@ -162,7 +162,10 @@ TEST(RingBufferTest, GetLastId) {
 TEST(RingBufferTest, OnDeleteCallback) {
     int64_t id_ = 0;
     bool clear_ = false;
-    RingBuffer buffer{3, 0, [&](int64_t id, bool clear){ id_ = id; clear_ = clear; }};
+    RingBuffer buffer{3, 0, [&](const BufferEntry* entry, bool clear, uint64_t){
+        id_ = entry ? entry->id_ : 0;
+        clear_ = clear;
+    }};
 
     buffer.Push(1, DUMMY);
     buffer.Push(2, DUMMY);

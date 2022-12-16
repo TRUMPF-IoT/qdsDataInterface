@@ -22,7 +22,7 @@ bool RingBuffer::Push(int64_t id, std::shared_ptr<std::vector<Measurement>> meas
         while (it < buffer_.end() && buffer_.size() >= kMaxSize_) {
             if (!it->locked_) {
                 if (on_delete_callback_) {
-                    on_delete_callback_(buffer_.front().id_, false);
+                    on_delete_callback_(&buffer_.front(), false, GetCurrentTimeMs());
                 }
 
                 it = buffer_.erase(it);
@@ -49,7 +49,7 @@ bool RingBuffer::Push(int64_t id, std::shared_ptr<std::vector<Measurement>> meas
                 // delete old entry if not yet locked
                 if (!it->locked_) {
                     if (on_delete_callback_) {
-                        on_delete_callback_(id, false);
+                        on_delete_callback_(&*it, false, 0);
                     }
 
                     buffer_.erase(it);
@@ -71,7 +71,7 @@ void RingBuffer::Delete(int64_t id) {
     for (auto it = buffer_.begin(); it < buffer_.end(); ++it) {
         if (it->id_ == id) {
             if (on_delete_callback_) {
-                on_delete_callback_(it->id_, false);
+                on_delete_callback_(&*it, false, 0);
             }
 
             buffer_.erase(it);
@@ -91,7 +91,7 @@ ResetInformation RingBuffer::Reset(ResetReason reason) {
     if (buffer_.empty()) return {0, ResetReason::UNKNOWN, 0, 0, 0};
 
     if (on_delete_callback_) {
-        on_delete_callback_(0, true);
+        on_delete_callback_(0, true, 0);
     }
 
     uint64_t reset_time_ms = GetCurrentTimeMs();

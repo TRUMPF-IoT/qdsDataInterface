@@ -26,8 +26,10 @@ class QDS_CORE_EXPORT DataSourceFactory {
      * @param buffer_size: Size of the buffer (number of storable entries)
      * @param counter_mode: QDS counter mode (introduced in API 2.1)
      * @param reset_information_size: Size of the reset information list
+     * @param deletion_information_size: Size of the deletion information list
      */
-    static std::shared_ptr<IDataSourceInOut> CreateDataSource(size_t buffer_size = 100, int8_t counter_mode = 0, size_t reset_information_size = 100);
+    static std::shared_ptr<IDataSourceInOut> CreateDataSource(size_t buffer_size = 100, int8_t counter_mode = 0,
+                                                              size_t reset_information_size = 100, size_t deletion_information_size = 100);
 };
 
 } // namespace

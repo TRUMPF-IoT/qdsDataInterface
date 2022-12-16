@@ -39,7 +39,8 @@ using ReferenceContainer = boost::multi_index_container<
  */
 class DataSourceInternal: public IDataSourceInOut {
  public:
-    DataSourceInternal(size_t buffer_size = 100, int8_t counter_mode = 0, size_t reset_information_size = 100);
+    DataSourceInternal(size_t buffer_size = 100, int8_t counter_mode = 0,
+                       size_t reset_information_size = 100, size_t deletion_information_size = 100);
 
     // IDataSourceIn methods
     virtual bool Add(int64_t id, std::string_view json) override;
@@ -51,6 +52,9 @@ class DataSourceInternal: public IDataSourceInOut {
     virtual void Delete(int64_t id) override;
     virtual bool IsReset() const override;
     virtual ResetInformationList AcknowledgeReset() override;
+
+    virtual bool IsOverflown() const override;
+    virtual DeletionInformationList AcknowledgeOverflow() override;
 
     virtual std::shared_mutex& GetBufferSharedMutex() const override;
     virtual BufferQueueType::iterator begin() override;
@@ -67,6 +71,7 @@ class DataSourceInternal: public IDataSourceInOut {
     // /shared methods
 
  private:
+    void OnDeleteCallback(const BufferEntry* entry, bool clear, uint64_t timestamp_ms);
     void ProcessRefMapping(int64_t id, std::vector<Measurement>& data);
     void DeleteRefMapping(int64_t id, bool clear);
 
@@ -79,6 +84,10 @@ class DataSourceInternal: public IDataSourceInOut {
     const size_t kResetInformationSize_;
     ResetInformationList reset_information_list_;
     mutable std::shared_mutex reset_information_list_mutex_;
+
+    const size_t kDeletionInformationSize_;
+    DeletionInformationList deletion_information_list_;
+    mutable std::shared_mutex deletion_information_list_mutex_;
 };
 
 } // namespace

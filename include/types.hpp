@@ -40,7 +40,7 @@ enum class ResetReason {
 };
 
 /**
- * Stores information of a buffer reset
+ * Stores information about a buffer reset
  */
 struct ResetInformation {
     uint64_t reset_time_ms_;            // ISO 8601 timestamp of the buffer reset
@@ -56,6 +56,22 @@ struct ResetInformation {
 struct ResetInformationList {
     std::deque<ResetInformation> list_; // list of reset information
     bool exceeded_max_entries_;         // flag of whether or not the list has overflown
+};
+
+/**
+ * Stores information about an dataset deletion
+ */
+struct DeletionInformation {
+    uint64_t deletion_time_ms_;    // ISO 8601 timestamp of the deletion
+    uint64_t data_set_time_ms_;    // ISO 8601 timestamp of the deleted dataset
+};
+
+/*
+ * Wrapper struct
+ */
+struct DeletionInformationList {
+    std::deque<DeletionInformation> list_;  // list of deletion information
+    bool exceeded_max_entries_;             // flag of whether or not the list has overflown
 };
 
 }

@@ -12,7 +12,7 @@
 
 namespace qds_buffer::core {
 
-using OnDeleteCallbackType = std::function<void(int64_t, bool)>;
+using OnDeleteCallbackType = std::function<void(const BufferEntry*, bool, uint64_t)>;
 
 /**
  * Thread-Safe

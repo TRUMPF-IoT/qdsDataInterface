@@ -15,13 +15,16 @@ namespace qds_buffer::core {
 
 using namespace std::placeholders;
 
-DataSourceInternal::DataSourceInternal(size_t buffer_size, int8_t counter_mode, size_t reset_information_size)
+DataSourceInternal::DataSourceInternal(size_t buffer_size, int8_t counter_mode,
+                                       size_t reset_information_size, size_t deletion_information_size)
     : parser_(std::bind(&parsing::DataValidator::ParserCallback, _1, _2, _3, _4, _5)), // @suppress("Symbol is not resolved")
-      buffer_(buffer_size, counter_mode, std::bind(&DataSourceInternal::DeleteRefMapping, this, _1, _2)), // @suppress("Symbol is not resolved")
+      buffer_(buffer_size, counter_mode, std::bind(&DataSourceInternal::OnDeleteCallback, this, _1, _2, _3)), // @suppress("Symbol is not resolved")
       ref_counter_(0),
-      kResetInformationSize_(reset_information_size) {
+      kResetInformationSize_(reset_information_size),
+      kDeletionInformationSize_(deletion_information_size) {
 
     reset_information_list_.exceeded_max_entries_ = false;
+    deletion_information_list_.exceeded_max_entries_ = false;
 }
 
 /**
@@ -103,6 +106,24 @@ ResetInformationList DataSourceInternal::AcknowledgeReset() {
     return list;
 }
 
+bool DataSourceInternal::IsOverflown() const {
+    std::shared_lock lock(deletion_information_list_mutex_);
+
+    return !deletion_information_list_.list_.empty();
+}
+
+DeletionInformationList DataSourceInternal::AcknowledgeOverflow() {
+    std::unique_lock lock(deletion_information_list_mutex_);
+
+    // create a copy to return
+    DeletionInformationList list = deletion_information_list_;
+
+    // clear member
+    deletion_information_list_ = {{}, false};
+
+    return list;
+}
+
 std::shared_mutex& DataSourceInternal::GetBufferSharedMutex() const {
     return buffer_.GetSharedMutex();
 }
@@ -152,6 +173,25 @@ int8_t DataSourceInternal::GetCounterMode() const {
 /**
  * private methods
  */
+
+void DataSourceInternal::OnDeleteCallback(const BufferEntry* entry, bool clear, uint64_t timestamp_ms) {
+    int64_t id = 0;
+    if (entry) {
+        std::unique_lock lock(deletion_information_list_mutex_);
+        id = entry->id_;
+
+        auto& list = deletion_information_list_.list_;
+        list.emplace_back(DeletionInformation{timestamp_ms, entry->timestamp_ms_});
+
+        if (list.size() > kDeletionInformationSize_) {
+            // list has overflown, delete oldest information
+            list.pop_front();
+            deletion_information_list_.exceeded_max_entries_ = true;
+        }
+    }
+
+    DeleteRefMapping(id, clear);
+}
 
 void DataSourceInternal::ProcessRefMapping(int64_t id, std::vector<Measurement>& data) {
     for (auto& d : data) {
