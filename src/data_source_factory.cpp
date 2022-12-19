@@ -8,9 +8,10 @@
 
 namespace qds_buffer::core {
 
-std::shared_ptr<IDataSourceInOut> DataSourceFactory::CreateDataSource(size_t buffer_size, int8_t counter_mode,
+std::shared_ptr<IDataSourceInOut> DataSourceFactory::CreateDataSource(size_t buffer_size, int8_t counter_mode, bool allow_overflow,
                                                                       size_t reset_information_size, size_t deletion_information_size) {
-    return std::make_shared<DataSourceInternal>(buffer_size, counter_mode, reset_information_size, deletion_information_size);
+    return std::make_shared<DataSourceInternal>(buffer_size, counter_mode, allow_overflow,
+                                                reset_information_size, deletion_information_size);
 }
 
 } // namespace

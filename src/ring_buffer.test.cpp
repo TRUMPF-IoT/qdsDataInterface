@@ -54,6 +54,15 @@ TEST(RingBufferTest, RingbufferOverflow) {
     EXPECT_EQ(500, buffer.GetLastId());
 }
 
+TEST(RingBufferTest, RingbufferOverflowNotAllowed) {
+    RingBuffer buffer{3, 0, false};
+
+    EXPECT_NO_THROW(buffer.Push(1, DUMMY));
+    EXPECT_NO_THROW(buffer.Push(2, DUMMY));
+    EXPECT_NO_THROW(buffer.Push(3, DUMMY));
+    EXPECT_THROW(buffer.Push(4, DUMMY), RingBufferException);
+}
+
 TEST(RingBufferTest, Iterate) {
     RingBuffer buffer{100, 0};
 
@@ -162,7 +171,7 @@ TEST(RingBufferTest, GetLastId) {
 TEST(RingBufferTest, OnDeleteCallback) {
     int64_t id_ = 0;
     bool clear_ = false;
-    RingBuffer buffer{3, 0, [&](const BufferEntry* entry, bool clear, uint64_t){
+    RingBuffer buffer{3, 0, true, [&](const BufferEntry* entry, bool clear, uint64_t){
         id_ = entry ? entry->id_ : 0;
         clear_ = clear;
     }};

@@ -19,7 +19,7 @@ using OnDeleteCallbackType = std::function<void(const BufferEntry*, bool, uint64
  */
 class RingBuffer {
  public:
-    RingBuffer(size_t size, int8_t counter_mode, OnDeleteCallbackType on_delete_callback = nullptr);
+    RingBuffer(size_t size, int8_t counter_mode, bool allow_overflow = true, OnDeleteCallbackType on_delete_callback = nullptr);
 
     bool Push(int64_t id, std::shared_ptr<std::vector<Measurement>> measurement);
     void Delete(int64_t id);
@@ -39,6 +39,7 @@ class RingBuffer {
 
     const size_t kMaxSize_;
     const int8_t kCounterMode_;
+    const bool kAllowOverflow_;
 
     mutable std::shared_mutex mutex_;
     BufferQueueType buffer_;

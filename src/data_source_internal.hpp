@@ -39,7 +39,7 @@ using ReferenceContainer = boost::multi_index_container<
  */
 class DataSourceInternal: public IDataSourceInOut {
  public:
-    DataSourceInternal(size_t buffer_size = 100, int8_t counter_mode = 0,
+    DataSourceInternal(size_t buffer_size = 100, int8_t counter_mode = 0, bool allow_overflow = true,
                        size_t reset_information_size = 100, size_t deletion_information_size = 100);
 
     // IDataSourceIn methods

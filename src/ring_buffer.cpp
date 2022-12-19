@@ -8,9 +8,10 @@
 
 namespace qds_buffer::core {
 
-RingBuffer::RingBuffer(size_t size, int8_t counter_mode, OnDeleteCallbackType on_delete_callback)
+RingBuffer::RingBuffer(size_t size, int8_t counter_mode,  bool allow_overflow, OnDeleteCallbackType on_delete_callback)
     : kMaxSize_(size),
       kCounterMode_(counter_mode),
+      kAllowOverflow_(allow_overflow),
       on_delete_callback_(on_delete_callback) {}
 
 bool RingBuffer::Push(int64_t id, std::shared_ptr<std::vector<Measurement>> measurement) {
@@ -18,6 +19,10 @@ bool RingBuffer::Push(int64_t id, std::shared_ptr<std::vector<Measurement>> meas
 
     // discard old unlocked data
     if (buffer_.size() >= kMaxSize_) {
+        if (!kAllowOverflow_) {
+            throw RingBufferException("Data overflow", "RingBuffer::Push");
+        }
+
         auto it = buffer_.begin();
         while (it < buffer_.end() && buffer_.size() >= kMaxSize_) {
             if (!it->locked_) {
