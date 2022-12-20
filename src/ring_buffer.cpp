@@ -102,7 +102,7 @@ ResetInformation RingBuffer::Reset(ResetReason reason) {
     uint64_t reset_time_ms = GetCurrentTimeMs();
     uint64_t oldest_dataset_time_ms = buffer_.front().timestamp_ms_;
     uint64_t newest_dataset_time_ms = buffer_.back().timestamp_ms_;
-    uint32_t deleted_datasets_count = buffer_.size();
+    uint32_t deleted_datasets_count = static_cast<uint32_t>(buffer_.size());
 
     buffer_.clear();
 
