@@ -10,6 +10,8 @@
 #include <variant>
 #include <vector>
 
+#include <boost/json.hpp>
+
 namespace qds_buffer::core {
 
 /*
@@ -95,29 +97,21 @@ struct Measurement {
 
     /*
      * Serializes a set of measurements to a JSON string
+     * this function was reviewed because json control characters in value string were not escaped
      */
     static std::string ToJson(const std::vector<Measurement>& list) {
-        std::stringstream ss;
-        bool first = true;
-        ss << "[";
+        boost::json::array measurementArray;
         for (auto& data : list) {
-            if (!first) {
-                ss << ",";
-            }
-            ss << "{";
-            ss << "\"NAME\":\"" << data.name_ << "\"";
-            ss << ",\"TYPE\":\"" << data.TypeToString() << "\"";
+            boost::json::object measurementObj;
+            measurementObj["NAME"] = data.name_;
+            measurementObj["TYPE"] = data.TypeToString();
             if (!data.unit_.empty()) {
-                ss << ",\"UNIT\":\"" << data.unit_ << "\"";
+                measurementObj["UNIT"] = data.unit_;
             }
-            ss << ",\"VALUE\":" << data.ValueToString();
-            ss << "}";
-
-            first = false;
+            measurementObj["VALUE"] = data.ValueToString();
+            measurementArray.push_back(measurementObj);
         }
-        ss << "]";
-
-        return ss.str();
+        return boost::json::serialize(measurementArray);
     }
 
  private:
@@ -126,7 +120,8 @@ struct Measurement {
      */
     struct VariantValueAsString {
         std::string operator()(std::monostate) { return ""; }
-        std::string operator()(const std::string& value) { return "\"" + value + "\""; }
+        std::string operator()(const std::string& value) { return value; }
+        //std::string operator()(const std::string& value) { return "\"" + value + "\""; }
         std::string operator()(std::int64_t value) { return std::to_string(value); }
         std::string operator()(double value) { return std::to_string(value); }
         std::string operator()(bool value) { return value ? "true" : "false"; }
