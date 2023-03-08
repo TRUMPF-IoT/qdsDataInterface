@@ -4,46 +4,42 @@
 
 #pragma once
 
-#include <boost/multi_index_container.hpp>
-#include <boost/multi_index/member.hpp>
+#include <boost/json/string_view.hpp>
 #include <boost/multi_index/hashed_index.hpp>
-
+#include <boost/multi_index/member.hpp>
+#include <boost/multi_index_container.hpp>
+#include <boost/thread.hpp>
 #include <i_data_source_in_out.hpp>
 
 #include "parsing/json_parser.hpp"
 #include "ring_buffer.hpp"
 
-namespace qds_buffer::core {
+namespace qds_buffer {
+
+namespace core {
 
 namespace multi_index_tag {
-    struct id{};
-    struct ref{};
-}
+struct id {};
+struct ref {};
+}  // namespace multi_index_tag
 
 using ReferenceContainer = boost::multi_index_container<
-  ReferenceData,
-  boost::multi_index::indexed_by<
-      boost::multi_index::hashed_non_unique<
-          boost::multi_index::tag<multi_index_tag::id>,
-          boost::multi_index::member<ReferenceData, int64_t, &ReferenceData::id_>
-      >,
-      boost::multi_index::hashed_unique<
-          boost::multi_index::tag<multi_index_tag::ref>,
-          boost::multi_index::member<ReferenceData, std::string, &ReferenceData::ref_>
-      >
-  >
->;
+    ReferenceData, boost::multi_index::indexed_by<
+                       boost::multi_index::hashed_non_unique<boost::multi_index::tag<multi_index_tag::id>,
+                                                             boost::multi_index::member<ReferenceData, int64_t, &ReferenceData::id_> >,
+                       boost::multi_index::hashed_unique<boost::multi_index::tag<multi_index_tag::ref>,
+                                                         boost::multi_index::member<ReferenceData, std::string, &ReferenceData::ref_> > > >;
 
 /**
  * Thread-Safe
  */
-class DataSourceInternal: public IDataSourceInOut {
- public:
-    DataSourceInternal(size_t buffer_size = 100, int8_t counter_mode = 0, bool allow_overflow = true,
-                       size_t reset_information_size = 100, size_t deletion_information_size = 100);
+class DataSourceInternal : public IDataSourceInOut {
+   public:
+    DataSourceInternal(size_t buffer_size = 100, int8_t counter_mode = 0, bool allow_overflow = true, size_t reset_information_size = 100,
+                       size_t deletion_information_size = 100);
 
     // IDataSourceIn methods
-    virtual bool Add(int64_t id, std::string_view json) override;
+    virtual bool Add(int64_t id, boost::json::string_view json) override;
     virtual void SetReference(const std::string& ref, const std::string& data, const std::string& data_format) override;
     virtual void Reset(ResetReason reason) override;
     // /IDataSourceIn methods
@@ -56,7 +52,7 @@ class DataSourceInternal: public IDataSourceInOut {
     virtual bool IsOverflown() const override;
     virtual DeletionInformationList AcknowledgeOverflow() override;
 
-    virtual std::shared_mutex& GetBufferSharedMutex() const override;
+    virtual boost::shared_mutex& GetBufferSharedMutex() const override;
     virtual BufferQueueType::iterator begin() override;
     virtual BufferQueueType::iterator end() override;
 
@@ -70,24 +66,24 @@ class DataSourceInternal: public IDataSourceInOut {
     virtual int8_t GetCounterMode() const override;
     // /shared methods
 
- private:
+   private:
     void OnDeleteCallback(const BufferEntry* entry, bool clear, uint64_t timestamp_ms);
     void ProcessRefMapping(int64_t id, std::vector<Measurement>& data);
     void DeleteRefMapping(int64_t id, bool clear);
 
     parsing::JsonParser parser_;
     RingBuffer buffer_;
-    mutable std::shared_mutex ref_mapping_mutex_;
+    mutable boost::shared_mutex ref_mapping_mutex_;
     ReferenceContainer ref_mapping_;
     uint64_t ref_counter_;
 
     const size_t kResetInformationSize_;
     ResetInformationList reset_information_list_;
-    mutable std::shared_mutex reset_information_list_mutex_;
+    mutable boost::shared_mutex reset_information_list_mutex_;
 
     const size_t kDeletionInformationSize_;
     DeletionInformationList deletion_information_list_;
-    mutable std::shared_mutex deletion_information_list_mutex_;
+    mutable boost::shared_mutex deletion_information_list_mutex_;
 };
-
-} // namespace
+}  // namespace core
+}  // namespace qds_buffer
