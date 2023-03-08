@@ -9,12 +9,17 @@ option(INSTALL_PUBLIC_HEADER "INSTALL_PUBLIC_HEADER" ON)
 
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
-# Set CXX to 17
-if(NOT DEFINED CMAKE_CXX_STANDARD OR CMAKE_CXX_STANDARD LESS 17)
-    set(CMAKE_CXX_STANDARD 17)
-    message(WARNING "Minimum C++17 required. Setting standard to 17.")
+# Set CXX to 11
+if(NOT DEFINED CMAKE_CXX_STANDARD OR CMAKE_CXX_STANDARD LESS 11)
+    set(CMAKE_CXX_STANDARD 11)
+    message(WARNING "Minimum C++11 required. Setting standard to 11.")
 endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+if (EXISTS ${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake)
+    include(${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake)
+    conan_basic_setup(KEEP_RPATHS)
+endif()
 
 set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost COMPONENTS json REQUIRED)
@@ -48,7 +53,7 @@ if (INSTALL_PUBLIC_HEADER)
 endif()
 
 target_include_directories(${PROJECT_NAME} PUBLIC include ${PROJECT_BINARY_DIR})
-target_link_libraries(${PROJECT_NAME} PRIVATE ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PRIVATE Boost::json)
 
 target_compile_options(${PROJECT_NAME} PRIVATE
   $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
