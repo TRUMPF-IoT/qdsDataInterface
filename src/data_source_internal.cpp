@@ -4,26 +4,27 @@
 
 #include "data_source_internal.hpp"
 
+#include <boost/thread.hpp>
+#include <exception.hpp>
 #include <fstream>
 #include <unordered_set>
 
-#include <exception.hpp>
-
 #include "parsing/data_validator.hpp"
 
-namespace qds_buffer::core {
+namespace qds_buffer {
+
+namespace core {
 
 using namespace std::placeholders;
 
-DataSourceInternal::DataSourceInternal(size_t buffer_size, int8_t counter_mode, bool allow_overflow,
-                                       size_t reset_information_size, size_t deletion_information_size)
-    : parser_(std::bind(&parsing::DataValidator::ParserCallback, _1, _2, _3, _4, _5)), // @suppress("Symbol is not resolved")
-      buffer_(buffer_size, counter_mode, allow_overflow, // @suppress("Symbol is not resolved")
+DataSourceInternal::DataSourceInternal(size_t buffer_size, int8_t counter_mode, bool allow_overflow, size_t reset_information_size,
+                                       size_t deletion_information_size)
+    : parser_(std::bind(&parsing::DataValidator::ParserCallback, _1, _2, _3, _4, _5)),  // @suppress("Symbol is not resolved")
+      buffer_(buffer_size, counter_mode, allow_overflow,                                // @suppress("Symbol is not resolved")
               std::bind(&DataSourceInternal::OnDeleteCallback, this, _1, _2, _3)),
       ref_counter_(0),
       kResetInformationSize_(reset_information_size),
       kDeletionInformationSize_(deletion_information_size) {
-
     reset_information_list_.exceeded_max_entries_ = false;
     deletion_information_list_.exceeded_max_entries_ = false;
 }
@@ -32,10 +33,13 @@ DataSourceInternal::DataSourceInternal(size_t buffer_size, int8_t counter_mode, 
  * IDataSourceIn methods
  */
 
-bool DataSourceInternal::Add(int64_t id, std::string_view json) {
+bool DataSourceInternal::Add(int64_t id, boost::json::string_view json) {
     parsing::ParsingState state;
 
-    auto [ok, error_msg] = parser_.Parse(json, &state);
+    auto jsonTuple = parser_.Parse(json, &state);
+    bool ok = std::get<0>(jsonTuple);
+    std::string error_msg = std::get<1>(jsonTuple);
+
     if (!ok) {
         throw ParsingException(error_msg, "DataSourceInternal::Add");
     }
@@ -52,7 +56,7 @@ bool DataSourceInternal::Add(int64_t id, std::string_view json) {
 }
 
 void DataSourceInternal::SetReference(const std::string& ref, const std::string& data, const std::string& data_format) {
-    std::unique_lock lock(ref_mapping_mutex_);
+    boost::unique_lock<boost::shared_mutex> lock(ref_mapping_mutex_);
 
     auto&& view = ref_mapping_.get<multi_index_tag::ref>();
     if (view.find(ref) != view.end()) {
@@ -60,11 +64,13 @@ void DataSourceInternal::SetReference(const std::string& ref, const std::string&
     }
 
     // id = 0, it will get updated once the measurement arrives
-    ref_mapping_.emplace(ReferenceData{0, ref, data_format, data}); // @suppress("Symbol is not resolved")
+    // ref_mapping_.emplace(ReferenceData{0, ref, data_format, data}); // @suppress("Symbol is not resolved")
+
+    ref_mapping_.emplace(ReferenceData{0, ref, data_format, data});  // @suppress("Symbol is not resolved")
 }
 
 void DataSourceInternal::Reset(ResetReason reason) {
-    std::unique_lock lock(reset_information_list_mutex_);
+    boost::unique_lock<boost::shared_mutex> lock(reset_information_list_mutex_);
     auto& list = reset_information_list_.list_;
 
     const auto& reset_information = list.emplace_back(buffer_.Reset(reason));
@@ -85,18 +91,16 @@ void DataSourceInternal::Reset(ResetReason reason) {
  * IDataSourceOut methods
  */
 
-void DataSourceInternal::Delete(int64_t id) {
-    buffer_.Delete(id);
-}
+void DataSourceInternal::Delete(int64_t id) { buffer_.Delete(id); }
 
 bool DataSourceInternal::IsReset() const {
-    std::shared_lock lock(reset_information_list_mutex_);
+    boost::shared_lock<boost::shared_mutex> lock(reset_information_list_mutex_);
 
     return !reset_information_list_.list_.empty();
 }
 
 ResetInformationList DataSourceInternal::AcknowledgeReset() {
-    std::unique_lock lock(reset_information_list_mutex_);
+    boost::unique_lock<boost::shared_mutex> lock(reset_information_list_mutex_);
 
     // create a copy to return
     ResetInformationList list = reset_information_list_;
@@ -108,13 +112,13 @@ ResetInformationList DataSourceInternal::AcknowledgeReset() {
 }
 
 bool DataSourceInternal::IsOverflown() const {
-    std::shared_lock lock(deletion_information_list_mutex_);
+    boost::shared_lock<boost::shared_mutex> lock(deletion_information_list_mutex_);
 
     return !deletion_information_list_.list_.empty();
 }
 
 DeletionInformationList DataSourceInternal::AcknowledgeOverflow() {
-    std::unique_lock lock(deletion_information_list_mutex_);
+    boost::unique_lock<boost::shared_mutex> lock(deletion_information_list_mutex_);
 
     // create a copy to return
     DeletionInformationList list = deletion_information_list_;
@@ -125,9 +129,7 @@ DeletionInformationList DataSourceInternal::AcknowledgeOverflow() {
     return list;
 }
 
-std::shared_mutex& DataSourceInternal::GetBufferSharedMutex() const {
-    return buffer_.GetSharedMutex();
-}
+boost::shared_mutex& DataSourceInternal::GetBufferSharedMutex() const { return buffer_.GetSharedMutex(); }
 
 BufferQueueType::iterator DataSourceInternal::begin() {
     // must lock mutex via GetBufferSharedMutex() before calling begin() and end()
@@ -140,7 +142,7 @@ BufferQueueType::iterator DataSourceInternal::end() {
 }
 
 const ReferenceData& DataSourceInternal::GetReference(const std::string& ref) const {
-    std::shared_lock lock(ref_mapping_mutex_);
+    boost::shared_lock<boost::shared_mutex> lock(ref_mapping_mutex_);
 
     auto&& view = ref_mapping_.get<multi_index_tag::ref>();
     auto it = view.find(ref);
@@ -155,21 +157,13 @@ const ReferenceData& DataSourceInternal::GetReference(const std::string& ref) co
  * shared methods
  */
 
-size_t DataSourceInternal::GetSize() const {
-    return buffer_.GetSize();
-}
+size_t DataSourceInternal::GetSize() const { return buffer_.GetSize(); }
 
-size_t DataSourceInternal::GetMaxSize() const {
-    return buffer_.GetMaxSize();
-}
+size_t DataSourceInternal::GetMaxSize() const { return buffer_.GetMaxSize(); }
 
-int64_t DataSourceInternal::GetLastId() const {
-    return buffer_.GetLastId();
-}
+int64_t DataSourceInternal::GetLastId() const { return buffer_.GetLastId(); }
 
-int8_t DataSourceInternal::GetCounterMode() const {
-    return buffer_.GetCounterMode();
-}
+int8_t DataSourceInternal::GetCounterMode() const { return buffer_.GetCounterMode(); }
 
 /**
  * private methods
@@ -178,7 +172,7 @@ int8_t DataSourceInternal::GetCounterMode() const {
 void DataSourceInternal::OnDeleteCallback(const BufferEntry* entry, bool clear, uint64_t timestamp_ms) {
     int64_t id = 0;
     if (entry) {
-        std::unique_lock lock(deletion_information_list_mutex_);
+        boost::unique_lock<boost::shared_mutex> lock(deletion_information_list_mutex_);
         id = entry->id_;
 
         auto& list = deletion_information_list_.list_;
@@ -197,18 +191,18 @@ void DataSourceInternal::OnDeleteCallback(const BufferEntry* entry, bool clear, 
 void DataSourceInternal::ProcessRefMapping(int64_t id, std::vector<Measurement>& data) {
     for (auto& d : data) {
         if (d.type_ == MeasurementType::kRef) {
-            std::unique_lock lock(ref_mapping_mutex_);
+            boost::unique_lock<boost::shared_mutex> lock(ref_mapping_mutex_);
 
             auto&& view = ref_mapping_.get<multi_index_tag::ref>();
-            const std::string& value = std::get<std::string>(d.value_);
+            const std::string& value = boost::get<std::string>(d.value_);
 
             auto it = view.find(value);
             if (it == view.end()) {
 #ifdef _MSC_VER
-                FILE *file;
+                FILE* file;
                 if (fopen_s(&file, value.c_str(), "r") == 0) {
 #else
-                if (FILE *file = fopen(value.c_str(), "r")) {
+                if (FILE* file = fopen(value.c_str(), "r")) {
 #endif
                     fclose(file);
                 } else {
@@ -218,7 +212,7 @@ void DataSourceInternal::ProcessRefMapping(int64_t id, std::vector<Measurement>&
             } else {
                 // A valid reference exists, update id and return
                 if (it->id_ == 0) {
-                    view.modify(it, [id](ReferenceData &data){ data.id_ = id; });
+                    view.modify(it, [id](ReferenceData& data) { data.id_ = id; });
                 } else {
                     throw RefException("The reference '" + value + "' is already in use", "DataSourceInternal::ProcessRefMapping");
                 }
@@ -236,7 +230,7 @@ void DataSourceInternal::ProcessRefMapping(int64_t id, std::vector<Measurement>&
 
             // load file content
             const std::string& path = value;
-            std::ifstream ifs(path, std::ios::binary|std::ios::ate);
+            std::ifstream ifs(path, std::ios::binary | std::ios::ate);
             if (!ifs) {
                 throw FileIoException("Could not open file " + path, "DataSourceInternal::ProcessRefMapping");
             }
@@ -245,13 +239,13 @@ void DataSourceInternal::ProcessRefMapping(int64_t id, std::vector<Measurement>&
             ifs.seekg(0, std::ios::beg);
 
             auto size = std::size_t(end - ifs.tellg());
-            if(size == 0) {
+            if (size == 0) {
                 throw FileIoException("File size is 0 bytes", "DataSourceInternal::ProcessRefMapping");
             }
 
             std::string buffer;
             buffer.resize(size);
-            if(!ifs.read((char*)buffer.data(), size)) {
+            if (!ifs.read((char*)buffer.data(), size)) {
                 throw FileIoException("Could not read from file " + path, "DataSourceInternal::ProcessRefMapping");
             }
 
@@ -262,7 +256,8 @@ void DataSourceInternal::ProcessRefMapping(int64_t id, std::vector<Measurement>&
                 throw FileIoException("Could not delete file " + path, "DataSourceInternal::ProcessRefMapping");
             }
 
-            ref_mapping_.emplace(ReferenceData{id, ref, format, buffer}); // @suppress("Symbol is not resolved")
+            // ref_mapping_.emplace(ReferenceData{id, ref, format, buffer}); // @suppress("Symbol is not resolved")
+            ref_mapping_.emplace(ReferenceData{id, ref, format, buffer});  // @suppress("Symbol is not resolved")
 
             // replace original ref value
             d.value_ = ref;
@@ -271,7 +266,7 @@ void DataSourceInternal::ProcessRefMapping(int64_t id, std::vector<Measurement>&
 }
 
 void DataSourceInternal::DeleteRefMapping(int64_t id, bool clear) {
-    std::unique_lock lock(ref_mapping_mutex_);
+    boost::unique_lock<boost::shared_mutex> lock(ref_mapping_mutex_);
 
     if (clear) {
         ref_mapping_.clear();
@@ -282,5 +277,5 @@ void DataSourceInternal::DeleteRefMapping(int64_t id, bool clear) {
         }
     }
 }
-
-} // namespace
+}  // namespace core
+}  // namespace qds_buffer

@@ -51,7 +51,7 @@ TEST(DataValidatorTest, OnObjectEndBasic) {
     state.data_->back().type_ = MeasurementType::kNotSet;
     EXPECT_THROW(DataValidator::ParserCallback(&state, ParserEvent::kOnObjectEnd, TEST_STRING(""), nullptr), ParsingException); // Measurement missing TYPE
     state.data_->back().type_ = MeasurementType::kString;
-    state.data_->back().value_ = std::monostate();
+    state.data_->back().value_ = boost::blank();
     EXPECT_THROW(DataValidator::ParserCallback(&state, ParserEvent::kOnObjectEnd, TEST_STRING(""), nullptr), ParsingException); // Measurement missing VALUE
     state.data_->back().value_ = std::string("my-value");
     EXPECT_NO_THROW(DataValidator::ParserCallback(&state, ParserEvent::kOnObjectEnd, TEST_STRING(""), nullptr));
@@ -368,33 +368,33 @@ TEST(DataValidatorTest, OnValueValue) {
     EXPECT_THROW(DataValidator::ParserCallback(&state, ParserEvent::kOnString, TEST_STRING("abcd"), nullptr), ParsingException); // value is null
 
     EXPECT_NO_THROW(DataValidator::ParserCallback(&state, ParserEvent::kOnString, TEST_STRING("abcd"), "abcd"));
-    EXPECT_EQ("abcd", std::get<std::string>(state.data_->back().value_));
+    EXPECT_EQ("abcd", boost::get<std::string>(state.data_->back().value_));
 
     state.has_key_ = true;
     state.validator_ = validator;
     EXPECT_THROW(DataValidator::ParserCallback(&state, ParserEvent::kOnInt64, TEST_STRING("abcd"), &test_int64), ParsingException); // Duplicate VALUE key
-    state.data_->back().value_ = std::monostate();
+    state.data_->back().value_ = boost::blank();
     EXPECT_NO_THROW(DataValidator::ParserCallback(&state, ParserEvent::kOnInt64, TEST_STRING("abcd"), &test_int64));
-    EXPECT_EQ(test_int64, std::get<std::int64_t>(state.data_->back().value_));
+    EXPECT_EQ(test_int64, boost::get<std::int64_t>(state.data_->back().value_));
 
     state.has_key_ = true;
     state.validator_ = validator;
     EXPECT_THROW(DataValidator::ParserCallback(&state, ParserEvent::kOnUint64, TEST_STRING("abcd"), &test_uint64), ParsingException); // Duplicate VALUE key
-    state.data_->back().value_ = std::monostate();
+    state.data_->back().value_ = boost::blank();
     EXPECT_NO_THROW(DataValidator::ParserCallback(&state, ParserEvent::kOnUint64, TEST_STRING("abcd"), &test_uint64));
-    EXPECT_EQ(test_uint64, std::get<std::int64_t>(state.data_->back().value_));
+    EXPECT_EQ(test_uint64, boost::get<std::int64_t>(state.data_->back().value_));
 
     state.has_key_ = true;
     state.validator_ = validator;
     EXPECT_THROW(DataValidator::ParserCallback(&state, ParserEvent::kOnDouble, TEST_STRING("abcd"), &test_double), ParsingException); // Duplicate VALUE key
-    state.data_->back().value_ = std::monostate();
+    state.data_->back().value_ = boost::blank();
     EXPECT_NO_THROW(DataValidator::ParserCallback(&state, ParserEvent::kOnDouble, TEST_STRING("abcd"), &test_double));
-    EXPECT_EQ(test_double, std::get<double>(state.data_->back().value_));
+    EXPECT_EQ(test_double, boost::get<double>(state.data_->back().value_));
 
     state.has_key_ = true;
     state.validator_ = validator;
     EXPECT_THROW(DataValidator::ParserCallback(&state, ParserEvent::kOnBool, TEST_STRING("abcd"), &test_bool), ParsingException); // Duplicate VALUE key
-    state.data_->back().value_ = std::monostate();
+    state.data_->back().value_ = boost::blank();
     EXPECT_NO_THROW(DataValidator::ParserCallback(&state, ParserEvent::kOnBool, TEST_STRING("abcd"), &test_bool));
-    EXPECT_EQ(test_bool, std::get<bool>(state.data_->back().value_));
+    EXPECT_EQ(test_bool, boost::get<bool>(state.data_->back().value_));
 }

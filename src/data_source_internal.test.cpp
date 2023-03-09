@@ -150,22 +150,22 @@ TEST(DataSourceInternalTest, Iterator) {
     ds.Add(222, "{\"NAME\":\"bbb\",\"TYPE\":\"INT\",\"VALUE\":123}");
     ds.Add(333, "{\"NAME\":\"ccc\",\"TYPE\":\"BOOL\",\"VALUE\":true}");
 
-    std::shared_lock lock(ds.GetBufferSharedMutex());
+    boost::shared_lock<boost::shared_mutex> lock(ds.GetBufferSharedMutex());
 
     auto it = ds.begin();
     EXPECT_EQ(111, it->id_);
     EXPECT_EQ("aaa", it->measurements_->data()->name_);
-    EXPECT_EQ("test-string", std::get<std::string>(it->measurements_->data()->value_));
+    EXPECT_EQ("test-string", boost::get<std::string>(it->measurements_->data()->value_));
 
     ++it;
     EXPECT_EQ(222, it->id_);
     EXPECT_EQ("bbb", it->measurements_->data()->name_);
-    EXPECT_EQ(123, std::get<std::int64_t>(it->measurements_->data()->value_));
+    EXPECT_EQ(123, boost::get<std::int64_t>(it->measurements_->data()->value_));
 
     ++it;
     EXPECT_EQ(333, it->id_);
     EXPECT_EQ("ccc", it->measurements_->data()->name_);
-    EXPECT_EQ(true, std::get<bool>(it->measurements_->data()->value_));
+    EXPECT_EQ(true, boost::get<bool>(it->measurements_->data()->value_));
 
     ++it;
     EXPECT_EQ(it, ds.end());
@@ -286,4 +286,43 @@ TEST(DataSourceInternalTest, DeleteRefMapping) {
     EXPECT_NO_THROW(ds.GetReference("ref-333"));
     EXPECT_THROW(ds.GetReference("ref-444"), RefException); // Reference ref-444 not found
     EXPECT_NO_THROW(ds.GetReference("ref-555"));
+}
+
+TEST(DataSourceInternalTest, ValueStringEscapeCharacterDoubleQuote) {
+    DataSourceInternal ds;
+
+    ds.Add(111, "{\"NAME\":\"aaa\",\"TYPE\":\"STRING\",\"VALUE\":\"\\\"AIF\\\"AIF.mpf\"}");
+    boost::shared_lock<boost::shared_mutex> lock(ds.GetBufferSharedMutex());
+
+    auto it = ds.begin();
+    EXPECT_EQ("\"AIF\"AIF.mpf", boost::get<std::string>(it->measurements_->data()->value_));
+
+    ++it;
+    EXPECT_EQ(it, ds.end());
+}
+
+TEST(DataSourceInternalTest, ValueStringEscapeCharacterBackslash) {
+    DataSourceInternal ds;
+
+    ds.Add(111, "{\"NAME\":\"aaa\",\"TYPE\":\"STRING\",\"VALUE\":\"\\\\AIF\\\\AIF.mpf\"}");
+    boost::shared_lock<boost::shared_mutex> lock(ds.GetBufferSharedMutex());
+
+    auto it = ds.begin();
+    EXPECT_EQ("\\AIF\\AIF.mpf", boost::get<std::string>(it->measurements_->data()->value_));
+
+    ++it;
+    EXPECT_EQ(it, ds.end());
+}
+
+TEST(DataSourceInternalTest, ValueStringEscapeMultipleCharacter) {
+    DataSourceInternal ds;
+
+    ds.Add(111, "{\"NAME\":\"aaa\",\"TYPE\":\"STRING\",\"VALUE\":\"\\t\\n\\r\\\\AIF\\t\\n\\r\\\\AIF.mpf\"}");
+    boost::shared_lock<boost::shared_mutex> lock(ds.GetBufferSharedMutex());
+
+    auto it = ds.begin();
+    EXPECT_EQ("\t\n\r\\AIF\t\n\r\\AIF.mpf", boost::get<std::string>(it->measurements_->data()->value_));
+
+    ++it;
+    EXPECT_EQ(it, ds.end());
 }
