@@ -53,7 +53,7 @@ if (INSTALL_PUBLIC_HEADER)
 endif()
 
 target_include_directories(${PROJECT_NAME} PUBLIC include ${PROJECT_BINARY_DIR})
-target_link_libraries(${PROJECT_NAME} PRIVATE Boost::json)
+target_link_libraries(${PROJECT_NAME} PRIVATE Boost::json Boost::thread)
 
 target_compile_options(${PROJECT_NAME} PRIVATE
   $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
