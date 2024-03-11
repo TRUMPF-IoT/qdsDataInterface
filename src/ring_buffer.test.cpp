@@ -54,6 +54,39 @@ TEST(RingBufferTest, RingbufferOverflow) {
     EXPECT_EQ(500, buffer.GetLastId());
 }
 
+TEST(RingBufferTest, RingbufferOverflowAllowedStress) {
+    size_t buffer_size = 3;
+    int count_data = count_data;
+    bool overflow = true;
+    RingBuffer buffer{buffer_size, 0, overflow};
+
+    for(int i = 1; i <= 1000000; i++){
+        EXPECT_NO_THROW(buffer.Push(i, DUMMY));
+        if(i >= buffer_size){
+            EXPECT_EQ(buffer_size, buffer.GetSize());
+        }
+    }
+}
+
+TEST(RingBufferTest, RingbufferOverflowNotAllowedStress) {
+    size_t buffer_size = 30;
+    int count_data = 1000000;
+    bool overflow = false;
+    RingBuffer buffer{buffer_size, 0, overflow};
+
+    for(int i = 1; i <= count_data; i++){
+       
+        if(i > buffer_size){
+            EXPECT_THROW(buffer.Push(i, DUMMY), RingBufferException);
+            
+        } else{
+            EXPECT_NO_THROW(buffer.Push(i, DUMMY));   
+        }
+    }
+    EXPECT_EQ(buffer_size, buffer.GetSize());
+}
+
+
 TEST(RingBufferTest, RingbufferOverflowNotAllowed) {
     RingBuffer buffer{3, 0, false};
 
