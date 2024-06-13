@@ -110,7 +110,7 @@ if(WIN32 AND BUILD_SHARED_LIBS)
 endif()
 
     target_include_directories(${PROJECT_NAME}-tests PRIVATE include)
-    target_link_libraries(${PROJECT_NAME}-tests PRIVATE GTest::gtest_main ${PROJECT_NAME} ${Boost_LIBRARIES})
+    target_link_libraries(${PROJECT_NAME}-tests PRIVATE GTest::gtest_main ${PROJECT_NAME} Boost::json Boost::thread)
 
     gtest_discover_tests(${PROJECT_NAME}-tests)
 
