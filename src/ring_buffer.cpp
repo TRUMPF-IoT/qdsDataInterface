@@ -31,7 +31,7 @@ namespace qds_buffer {
                 while (it < buffer_.end() && buffer_.size() >= kMaxSize_) {
                     if (!it->locked_) {
                         if (on_delete_callback_) {
-                            on_delete_callback_(&buffer_.front(), false, GetCurrentTimeMs());
+                            on_delete_callback_(&(*it), false, GetCurrentTimeMs());
                         }
 
                         it = buffer_.erase(it);
