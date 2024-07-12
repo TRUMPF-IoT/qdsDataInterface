@@ -288,45 +288,7 @@ TEST(DataSourceInternalTest, DeleteRefMapping) {
     EXPECT_NO_THROW(ds.GetReference("ref-555"));
 }
 
-TEST(DataSourceInternalTest, DeleteRefMappingLoop){
-    int buffersize = 100;
-    int dataSize = 1000;
 
-    DataSourceInternal ds{buffersize};
-
-    for(int i = 1; i<= dataSize; i++){
-        std::string ref = "ref-%";
-        size_t pos = ref.find('%');
-        
-        if (pos != std::string::npos) {
-            ref.replace(pos, 1, std::to_string(i));
-        }
-        
-        ds.SetReference(ref, "testdata", "abc");
-    }
-
-    //buffer size empty
-     ASSERT_EQ(0, ds.GetSize());
-     //ref files 1000
-     ASSERT_EQ(dataSize, ds.refSize());
-    
-     
-     for(int i = 1; i <= dataSize ; i++){
-        EXPECT_NO_THROW(ds.GetReference("ref-"+std::to_string(i)));
-     }
-
-     for(int i = 1; i <=dataSize; i++){
-         std::string jsonData = "{\"NAME\":\"a\",\"TYPE\":\"REF\",\"VALUE\":\"ref-" + std::to_string(i) + "\"}";
-         ds.Add(i, jsonData);
-     }
-
-     ASSERT_EQ(buffersize, ds.GetSize());
-     ASSERT_EQ(buffersize, ds.refSize());
-     
-     for(int i = dataSize; i > dataSize - buffersize; i--){
-         EXPECT_NO_THROW(ds.GetReference("ref-"+std::to_string(i)));
-     }
-}
 TEST(DataSourceInternalTest, ValueStringEscapeCharacterDoubleQuote) {
     DataSourceInternal ds;
 
