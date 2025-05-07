@@ -51,7 +51,7 @@ class DataSourceInternal : public IDataSourceInOut {
 
     virtual bool IsOverflown() const override;
     virtual DeletionInformationList AcknowledgeOverflow() override;
-
+    virtual bool GetAllowOverflow() const override;
     virtual boost::shared_mutex& GetBufferSharedMutex() const override;
     virtual BufferQueueType::iterator begin() override;
     virtual BufferQueueType::iterator end() override;
@@ -64,6 +64,8 @@ class DataSourceInternal : public IDataSourceInOut {
     virtual size_t GetMaxSize() const override;
     virtual int64_t GetLastId() const override;
     virtual int8_t GetCounterMode() const override;
+    virtual size_t GetDeletionInformationSize() const override;
+    virtual size_t GetResetInformationSize() const override;
     // /shared methods
 
    private:

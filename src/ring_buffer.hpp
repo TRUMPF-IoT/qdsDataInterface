@@ -35,6 +35,7 @@ namespace qds_buffer {
          size_t GetMaxSize() const;
          int64_t GetLastId() const;
          int8_t GetCounterMode() const;
+         bool GetAllowOverflow() const;
 
       private:
          static uint64_t GetCurrentTimeMs();

@@ -4,6 +4,8 @@
 
 #include "ring_buffer.hpp"
 
+#include <chrono>
+
 #include <exception.hpp>
 
 #include <boost/thread.hpp>
@@ -47,7 +49,7 @@ namespace qds_buffer {
             }
 
             if (kCounterMode_ == 0) {
-                // in CounterMode 0, only allow ids that are newer than the last element in the buffer
+                // in CounterMode 0, only allow ids that are greater than the last element in the buffer
                 if (!buffer_.empty() && buffer_.back().id_ >= id) {
                     throw RingBufferException("Bad Id", "RingBuffer::Push");
                 }
@@ -150,6 +152,9 @@ namespace qds_buffer {
         uint64_t RingBuffer::GetCurrentTimeMs() {
             using namespace std::chrono;
             return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+        }
+        bool RingBuffer::GetAllowOverflow() const { 
+            return kAllowOverflow_; 
         }
     }
 } // namespace

@@ -21,6 +21,10 @@ namespace qds_buffer {
             using IDataSourceIn::GetMaxSize;
             using IDataSourceIn::GetLastId;
             using IDataSourceIn::GetCounterMode;
+            using IDataSourceIn::GetAllowOverflow;
+
+            virtual size_t GetDeletionInformationSize() const = 0;
+            virtual size_t GetResetInformationSize() const = 0;
         };
     }
 } // namespace

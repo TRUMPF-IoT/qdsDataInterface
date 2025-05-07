@@ -128,7 +128,7 @@ DeletionInformationList DataSourceInternal::AcknowledgeOverflow() {
 
     return list;
 }
-
+bool DataSourceInternal::GetAllowOverflow() const { return buffer_.GetAllowOverflow(); }
 boost::shared_mutex& DataSourceInternal::GetBufferSharedMutex() const { return buffer_.GetSharedMutex(); }
 
 BufferQueueType::iterator DataSourceInternal::begin() {
@@ -164,6 +164,8 @@ size_t DataSourceInternal::GetMaxSize() const { return buffer_.GetMaxSize(); }
 int64_t DataSourceInternal::GetLastId() const { return buffer_.GetLastId(); }
 
 int8_t DataSourceInternal::GetCounterMode() const { return buffer_.GetCounterMode(); }
+size_t DataSourceInternal::GetDeletionInformationSize() const { return kDeletionInformationSize_; } 
+size_t DataSourceInternal::GetResetInformationSize() const { return kResetInformationSize_; }
 
 /**
  * private methods

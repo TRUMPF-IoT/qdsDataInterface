@@ -100,6 +100,10 @@ namespace qds_buffer {
             * @returns active counter mode
             */
             virtual int8_t GetCounterMode() const = 0;
+            /*
+            * @returns if overflow of ringbuffer is allowed
+            */
+            virtual bool GetAllowOverflow() const = 0;
         };
     }
 } // namespace
