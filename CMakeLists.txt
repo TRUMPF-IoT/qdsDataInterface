@@ -92,6 +92,7 @@ if (TESTING)
     endif()
     
     include(GoogleTest)
+    include(CTest)
 
     ### build tests
     add_executable(${PROJECT_NAME}-tests
