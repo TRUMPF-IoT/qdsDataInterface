@@ -274,9 +274,8 @@ void DataSourceInternal::DeleteRefMapping(int64_t id, bool clear) {
         ref_mapping_.clear();
     } else {
         auto&& id_view = ref_mapping_.get<multi_index_tag::id>();
-        for (auto it = id_view.find(id); it != id_view.end(); it = id_view.find(id)) {
-            ref_mapping_.erase(it);
-        }
+        auto range = id_view.equal_range(id);
+        id_view.erase(range.first, range.second);
     }
 }
 }  // namespace core
