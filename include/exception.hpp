@@ -85,5 +85,13 @@ namespace qds_buffer {
         public:
             FileIoException(const std::string& msg, const std::string& scope) : Exception(msg, scope) {}
         };
+
+        /**
+         * Thrown when the ring buffer overflows
+        */
+        class RingBufferOverflowException : public RingBufferException {
+        public:
+            RingBufferOverflowException() : RingBufferException("Ring buffer overflow", "RingBufferOverflowException") {}
+        };       
     } // namespace core
 } // namespace qds_buffer

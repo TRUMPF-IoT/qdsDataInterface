@@ -20,13 +20,13 @@ namespace qds_buffer {
             kAllowOverflow_(allow_overflow),
             on_delete_callback_(on_delete_callback) {}
 
-        bool RingBuffer::Push(int64_t id, std::shared_ptr<std::vector<Measurement>> measurement) {
+        int RingBuffer::Push(int64_t id, std::shared_ptr<std::vector<Measurement>> measurement) {
             boost::unique_lock<boost::shared_mutex> lock(mutex_);
-
+            int deletion_counter = 0;
             // discard old unlocked data
             if (buffer_.size() >= kMaxSize_) {
                 if (!kAllowOverflow_) {
-                    throw RingBufferException("Data overflow", "RingBuffer::Push");
+                    throw RingBufferOverflowException();
                 }
 
                 auto it = buffer_.begin();
@@ -37,6 +37,7 @@ namespace qds_buffer {
                         }
 
                         it = buffer_.erase(it);
+                        deletion_counter++;
                     } else {
                         ++it;
                     }
@@ -44,7 +45,8 @@ namespace qds_buffer {
 
                 if (buffer_.size() >= kMaxSize_) {
                     // all data is locked, can't add new data
-                    return false;
+                    
+                    return -1;
                 }
             }
 
@@ -67,13 +69,13 @@ namespace qds_buffer {
                             break;
                         }
                         // no action if entry was locked
-                        return false;
+                        return -1;
                     }
                 }
             }
 
             buffer_.push_back(BufferEntry{id, measurement, GetCurrentTimeMs(), false});
-            return true;
+            return deletion_counter;
         }
 
         void RingBuffer::Delete(int64_t id) {
