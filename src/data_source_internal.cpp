@@ -33,7 +33,7 @@ DataSourceInternal::DataSourceInternal(size_t buffer_size, int8_t counter_mode, 
  * IDataSourceIn methods
  */
 
-bool DataSourceInternal::Add(int64_t id, boost::json::string_view json) {
+int DataSourceInternal::Add(int64_t id, boost::json::string_view json) {
     parsing::ParsingState state;
 
     auto jsonTuple = parser_.Parse(json, &state);
@@ -43,16 +43,23 @@ bool DataSourceInternal::Add(int64_t id, boost::json::string_view json) {
     if (!ok) {
         throw ParsingException(error_msg, "DataSourceInternal::Add");
     }
+       
 
     auto measurement = state.data_;
     ProcessRefMapping(id, *measurement);
+    int deletion_count = 0;
 
-    ok = buffer_.Push(id, measurement);
-    if (!ok) {
+    try {
+        deletion_count = buffer_.Push(id, measurement);
+        if (deletion_count < 0) {
+            DeleteRefMapping(id, false);
+        }
+    } catch (...) {
         DeleteRefMapping(id, false);
+        throw;
     }
 
-    return ok;
+    return deletion_count;
 }
 
 void DataSourceInternal::SetReference(const std::string& ref, const std::string& data, const std::string& data_format) {
