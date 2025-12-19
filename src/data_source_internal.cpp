@@ -10,7 +10,8 @@
 #include <unordered_set>
 
 #include "parsing/data_validator.hpp"
-
+#include "mem_info.hpp"
+    
 namespace qds_buffer {
 
 namespace core {
@@ -18,15 +19,21 @@ namespace core {
 using namespace std::placeholders;
 
 DataSourceInternal::DataSourceInternal(size_t buffer_size, int8_t counter_mode, bool allow_overflow, size_t reset_information_size,
-                                       size_t deletion_information_size)
+                                       size_t deletion_information_size, bool enable_memory_info_logging)
     : parser_(std::bind(&parsing::DataValidator::ParserCallback, _1, _2, _3, _4, _5)),  // @suppress("Symbol is not resolved")
       buffer_(buffer_size, counter_mode, allow_overflow,                                // @suppress("Symbol is not resolved")
               std::bind(&DataSourceInternal::OnDeleteCallback, this, _1, _2, _3)),
       ref_counter_(0),
       kResetInformationSize_(reset_information_size),
-      kDeletionInformationSize_(deletion_information_size) {
+      kDeletionInformationSize_(deletion_information_size),
+      enable_memory_info_logging_(enable_memory_info_logging) {
     reset_information_list_.exceeded_max_entries_ = false;
     deletion_information_list_.exceeded_max_entries_ = false;
+}
+
+DataSourceInternal::~DataSourceInternal() {
+    // Cleanup is handled automatically by RAII
+    // All resources (buffer, mutexes, containers) are cleaned up automatically
 }
 
 /**
@@ -46,13 +53,20 @@ bool DataSourceInternal::Add(int64_t id, boost::json::string_view json) {
 
     auto measurement = state.data_;
     ProcessRefMapping(id, *measurement);
+    int deletion_count = 0;
 
-    ok = buffer_.Push(id, measurement);
-    if (!ok) {
+    try {
+        deletion_count = buffer_.Push(id, measurement);
+        if (deletion_count < 0) {
+            DeleteRefMapping(id, false);
+        }
+    } catch (...) {
         DeleteRefMapping(id, false);
     }
-
-    return ok;
+    if(enable_memory_info_logging_) {
+        print_heap_stats();
+    }
+    return deletion_count;
 }
 
 void DataSourceInternal::SetReference(const std::string& ref, const std::string& data, const std::string& data_format) {
@@ -166,6 +180,7 @@ int64_t DataSourceInternal::GetLastId() const { return buffer_.GetLastId(); }
 int8_t DataSourceInternal::GetCounterMode() const { return buffer_.GetCounterMode(); }
 size_t DataSourceInternal::GetDeletionInformationSize() const { return kDeletionInformationSize_; } 
 size_t DataSourceInternal::GetResetInformationSize() const { return kResetInformationSize_; }
+bool DataSourceInternal::GetEnableMemoryInfoLogging() const { return enable_memory_info_logging_; }
 
 /**
  * private methods

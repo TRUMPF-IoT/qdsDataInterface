@@ -36,7 +36,8 @@ using ReferenceContainer = boost::multi_index_container<
 class DataSourceInternal : public IDataSourceInOut {
    public:
     DataSourceInternal(size_t buffer_size = 100, int8_t counter_mode = 0, bool allow_overflow = true, size_t reset_information_size = 100,
-                       size_t deletion_information_size = 100);
+                       size_t deletion_information_size = 100,bool enable_memory_info_logging = false);
+    virtual ~DataSourceInternal();
 
     // IDataSourceIn methods
     virtual bool Add(int64_t id, boost::json::string_view json) override;
@@ -66,6 +67,7 @@ class DataSourceInternal : public IDataSourceInOut {
     virtual int8_t GetCounterMode() const override;
     virtual size_t GetDeletionInformationSize() const override;
     virtual size_t GetResetInformationSize() const override;
+    virtual bool GetEnableMemoryInfoLogging() const override;
     // /shared methods
 
    private:
@@ -86,6 +88,7 @@ class DataSourceInternal : public IDataSourceInOut {
     const size_t kDeletionInformationSize_;
     DeletionInformationList deletion_information_list_;
     mutable boost::shared_mutex deletion_information_list_mutex_;
+    bool enable_memory_info_logging_ = false;
 };
 }  // namespace core
 }  // namespace qds_buffer

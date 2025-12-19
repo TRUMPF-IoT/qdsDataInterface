@@ -16,6 +16,7 @@ namespace qds_buffer {
         */
         class IDataSourceInOut : public virtual IDataSourceIn, public virtual IDataSourceOut {
         public:
+            virtual ~IDataSourceInOut() = default;
             // remove ambiguity of shared methods
             using IDataSourceIn::GetSize;
             using IDataSourceIn::GetMaxSize;
@@ -25,6 +26,7 @@ namespace qds_buffer {
 
             virtual size_t GetDeletionInformationSize() const = 0;
             virtual size_t GetResetInformationSize() const = 0;
+            virtual bool GetEnableMemoryInfoLogging() const = 0;
         };
     }
 } // namespace

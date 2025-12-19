@@ -30,10 +30,12 @@ namespace qds_buffer {
                 * @param allow_overflow: allow buffer overflows or not (throws exception if not allowed and limit reached)
                 * @param reset_information_size: Size of the reset information list
                 * @param deletion_information_size: Size of the deletion information list
+                * @param enable_memory_info_logging: Enable memory info logging after each Add operation
                 */
                 static std::shared_ptr<IDataSourceInOut> CreateDataSource(
                         size_t buffer_size = 100, int8_t counter_mode = 0, bool allow_overflow = true,
-                        size_t reset_information_size = 100, size_t deletion_information_size = 100);
+                        size_t reset_information_size = 100, size_t deletion_information_size = 100,
+                        bool enable_memory_info_logging = false);
                 };
         }
 } // namespace

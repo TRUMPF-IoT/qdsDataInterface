@@ -314,7 +314,63 @@ TEST(DataSourceInternalTest, ValueStringEscapeCharacterBackslash) {
     ++it;
     EXPECT_EQ(it, ds.end());
 }
+TEST(DataSourceInternalTest, DestructorCalledOnSharedPtrRelease) {
+    // Test that DataSourceInternal destructor is properly called when shared_ptr is released
+    std::shared_ptr<DataSourceInternal> ds1 = std::make_shared<DataSourceInternal>(100, 0, true, 10, 10);
+    std::weak_ptr<DataSourceInternal> weak_ds1 = ds1;
+    
+    EXPECT_FALSE(weak_ds1.expired());
+    EXPECT_EQ(1, ds1.use_count());
+    
+    // Create a second shared_ptr
+    std::shared_ptr<DataSourceInternal> ds2 = ds1;
+    EXPECT_EQ(2, ds1.use_count());
+    EXPECT_EQ(2, ds2.use_count());
+    
+    // Release first pointer
+    ds1.reset();
+    EXPECT_FALSE(weak_ds1.expired());  // Still alive because ds2 holds it
+    EXPECT_EQ(1, ds2.use_count());
+    
+    // Release second pointer - destructor should be called
+    ds2.reset();
+    EXPECT_TRUE(weak_ds1.expired());  // Now destroyed
+}
 
+TEST(DataSourceInternalTest, DestructorCalledOnReassignment) {
+    // Test that destructor is called when shared_ptr is reassigned
+    std::shared_ptr<DataSourceInternal> ds = std::make_shared<DataSourceInternal>(100, 0, true, 10, 10);
+    std::weak_ptr<DataSourceInternal> weak_ds = ds;
+    
+    ds->Add(1, DUMMY_JSON);
+    EXPECT_EQ(1, ds->GetSize());
+    EXPECT_FALSE(weak_ds.expired());
+    
+    // Create new DataSource and assign - old one should be destroyed
+    ds = std::make_shared<DataSourceInternal>(200, 1, false, 20, 20);
+    EXPECT_TRUE(weak_ds.expired());  // Old DataSource destroyed
+    EXPECT_EQ(0, ds->GetSize());     // New DataSource is empty
+    EXPECT_EQ(200, ds->GetMaxSize());
+}
+
+TEST(DataSourceInternalTest, DestructorCleansUpReferences) {
+    // Test that destructor properly cleans up references
+    std::shared_ptr<DataSourceInternal> ds = std::make_shared<DataSourceInternal>(100, 0, true, 10, 10);
+    
+    ds->SetReference("ref-test-1", "test data 1", "txt");
+    ds->SetReference("ref-test-2", "test data 2", "bin");
+    ds->Add(1, "{\"NAME\":\"field1\",\"TYPE\":\"REF\",\"VALUE\":\"ref-test-1\"}");
+    
+    EXPECT_EQ(1, ds->GetSize());
+    
+    // Destroy DataSource - should clean up all references
+    ds.reset();
+    
+    // Create new DataSource - references should not exist
+    ds = std::make_shared<DataSourceInternal>(100, 0, true, 10, 10);
+    EXPECT_THROW(ds->GetReference("ref-test-1"), RefException);
+    EXPECT_THROW(ds->GetReference("ref-test-2"), RefException);
+}
 TEST(DataSourceInternalTest, ValueStringEscapeMultipleCharacter) {
     DataSourceInternal ds;
 
