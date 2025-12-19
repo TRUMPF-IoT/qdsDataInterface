@@ -40,7 +40,7 @@ class DataSourceInternal : public IDataSourceInOut {
     virtual ~DataSourceInternal();
 
     // IDataSourceIn methods
-    virtual bool Add(int64_t id, boost::json::string_view json) override;
+    virtual int Add(int64_t id, boost::json::string_view json) override;
     virtual void SetReference(const std::string& ref, const std::string& data, const std::string& data_format) override;
     virtual void Reset(ResetReason reason) override;
     // /IDataSourceIn methods

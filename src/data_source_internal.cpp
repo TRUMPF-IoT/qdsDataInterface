@@ -40,7 +40,7 @@ DataSourceInternal::~DataSourceInternal() {
  * IDataSourceIn methods
  */
 
-bool DataSourceInternal::Add(int64_t id, boost::json::string_view json) {
+int DataSourceInternal::Add(int64_t id, boost::json::string_view json) {
     parsing::ParsingState state;
 
     auto jsonTuple = parser_.Parse(json, &state);
@@ -50,6 +50,7 @@ bool DataSourceInternal::Add(int64_t id, boost::json::string_view json) {
     if (!ok) {
         throw ParsingException(error_msg, "DataSourceInternal::Add");
     }
+       
 
     auto measurement = state.data_;
     ProcessRefMapping(id, *measurement);
@@ -62,6 +63,7 @@ bool DataSourceInternal::Add(int64_t id, boost::json::string_view json) {
         }
     } catch (...) {
         DeleteRefMapping(id, false);
+        throw;
     }
     if(enable_memory_info_logging_) {
         print_heap_stats();
@@ -289,9 +291,8 @@ void DataSourceInternal::DeleteRefMapping(int64_t id, bool clear) {
         ref_mapping_.clear();
     } else {
         auto&& id_view = ref_mapping_.get<multi_index_tag::id>();
-        for (auto it = id_view.find(id); it != id_view.end(); it = id_view.find(id)) {
-            ref_mapping_.erase(it);
-        }
+        auto range = id_view.equal_range(id);
+        id_view.erase(range.first, range.second);
     }
 }
 }  // namespace core

@@ -36,13 +36,13 @@ namespace qds_buffer {
             *                }
             *              ]
             *
-            * @returns true: data added
-            *          false: data not added
+            * @returns number of deleted data
+            *          or -1
             *
-            * @throws ParsingException, RefException, RingBufferException
+            * @throws ParsingException, RefException, RingBufferException RingBufferOverflowException
             */
             //virtual bool Add(int64_t id, std::string_view json) = 0;
-            virtual bool Add(int64_t id, boost::json::string_view json) = 0;
+            virtual int Add(int64_t id, boost::json::string_view json) = 0;
 
             /*
             * Stores a new reference (REF data type)

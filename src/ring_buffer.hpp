@@ -23,7 +23,7 @@ namespace qds_buffer {
       public:
          RingBuffer(size_t size, int8_t counter_mode, bool allow_overflow = true, OnDeleteCallbackType on_delete_callback = nullptr);
 
-         bool Push(int64_t id, std::shared_ptr<std::vector<Measurement>> measurement);
+         int Push(int64_t id, std::shared_ptr<std::vector<Measurement>> measurement);
          void Delete(int64_t id);
          ResetInformation Reset(ResetReason reason);
 
