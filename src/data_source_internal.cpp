@@ -229,13 +229,13 @@ void DataSourceInternal::ProcessRefMapping(int64_t id, std::vector<Measurement>&
                                        "DataSourceInternal::ProcessRefMapping");
                 }
             } else {
-                // A valid reference exists, update id and return
+                // A valid reference exists, update id and continue with next measurement
                 if (it->id_ == 0) {
                     view.modify(it, [id](ReferenceData& data) { data.id_ = id; });
                 } else {
                     throw RefException("The reference '" + value + "' is already in use", "DataSourceInternal::ProcessRefMapping");
                 }
-                return;
+                continue;  // Continue processing remaining measurements (FIX: was 'return')
             }
 
             // file exists, we will replace it with our own ref-id
