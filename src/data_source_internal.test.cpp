@@ -607,3 +607,48 @@ TEST(DataSourceInternalTest, ValueStringEscapeMultipleCharacter) {
     ++it;
     EXPECT_EQ(it, ds.end());
 }
+
+// Memory Leak Test: Multiple references via SetReference should all be processed
+// Reproduces bug where only first reference gets id updated, rest stay at id=0
+TEST(DataSourceInternalTest, MultipleReferencesViaSetReference_AllShouldBeProcessed) {
+    // Create small buffer to trigger overflow quickly
+    DataSourceInternal ds(5, 0, true);
+
+    // Set multiple references via SetReference (simulating VLP API SetDataHandler)
+    std::string large_data_1(1024 * 100, 'A');  // 100KB
+    std::string large_data_2(1024 * 100, 'B');  // 100KB
+    std::string large_data_3(1024 * 100, 'C');  // 100KB
+
+    EXPECT_NO_THROW(ds.SetReference("ref-img1", large_data_1, "jpg"));
+    EXPECT_NO_THROW(ds.SetReference("ref-img2", large_data_2, "jpg"));
+    EXPECT_NO_THROW(ds.SetReference("ref-img3", large_data_3, "png"));
+
+    // Verify all references exist with id=0 initially
+    EXPECT_EQ(0, ds.GetReference("ref-img1").id_);
+    EXPECT_EQ(0, ds.GetReference("ref-img2").id_);
+    EXPECT_EQ(0, ds.GetReference("ref-img3").id_);
+
+    // Add a single JSON with all three references
+    std::string json = R"([
+        {"NAME":"Image1","TYPE":"REF","VALUE":"ref-img1"},
+        {"NAME":"Image2","TYPE":"REF","VALUE":"ref-img2"},
+        {"NAME":"Image3","TYPE":"REF","VALUE":"ref-img3"}
+    ])";
+
+    EXPECT_NO_THROW(ds.Add(1, json));
+
+    // BUG REPRODUCTION: With the bug (return instead of continue), 
+    // only ref-img1 gets id updated to 1, ref-img2 and ref-img3 stay at id=0
+    // After fix: All three should have id=1
+    EXPECT_EQ(1, ds.GetReference("ref-img1").id_);
+    EXPECT_EQ(1, ds.GetReference("ref-img2").id_);  // This FAILS with bug
+    EXPECT_EQ(1, ds.GetReference("ref-img3").id_);  // This FAILS with bug
+
+    // Now delete the entry - all references should be cleaned up
+    ds.Delete(1);
+
+    // After delete, all references should be gone (throw exception when accessing)
+    EXPECT_THROW(ds.GetReference("ref-img1"), RefException);
+    EXPECT_THROW(ds.GetReference("ref-img2"), RefException);  // With bug, this stays in memory!
+    EXPECT_THROW(ds.GetReference("ref-img3"), RefException);  // With bug, this stays in memory!
+}
